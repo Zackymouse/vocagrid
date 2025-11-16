@@ -1,0 +1,1215 @@
+@import "./globals.css";
+
+:root {
+  --p1: #90caf9;
+  --p2: #ef9a9a;
+  --locked: #5b5b5b;
+  --bonus: #ffd54f;
+  --chip: #4f8cff;
+  --chipText: #fff;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial, sans-serif;
+  background: #f5f7fb;
+  color: #222;
+  margin: 0;
+  padding: 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+h1 {
+  margin: 10px 0 6px;
+  font-weight: 800;
+}
+
+/* Screens */
+.screen.start,
+.screen.end {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+/* Enhanced title screen with gradient background and modern design */
+.screen.start {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.screen.start::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.screen.start > * {
+  position: relative;
+  z-index: 1;
+}
+
+.screen.start h1 {
+  color: #fff;
+  font-size: 56px;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin: 20px 0 30px;
+  letter-spacing: 2px;
+  animation: titlePulse 2s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.screen.start .row {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 12px 20px;
+  border-radius: 12px;
+  margin: 12px auto;
+  max-width: 600px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.screen.start .card.rules {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.screen.start .card.rules h2 {
+  color: #667eea;
+  font-size: 24px;
+}
+
+.screen.start #startBtn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #fff;
+  font-size: 20px;
+  padding: 16px 48px;
+  border-radius: 50px;
+  box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.screen.start #startBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(245, 87, 108, 0.5);
+}
+
+/* Enhanced result screen with celebration effects */
+.screen.end {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0 20px 60px rgba(245, 87, 108, 0.4);
+  position: relative;
+  overflow: hidden;
+  animation: resultFadeIn 0.6s ease-out;
+}
+
+@keyframes resultFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.screen.end::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.screen.end > * {
+  position: relative;
+  z-index: 1;
+}
+
+.screen.end h2 {
+  color: #fff;
+  font-size: 48px;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin-bottom: 30px;
+  animation: bounce 1s ease-out;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-20px);
+  }
+  60% {
+    transform: translateY(-10px);
+  }
+}
+
+.screen.end .final-board-container {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  margin: 20px auto;
+  max-width: 400px;
+}
+
+.screen.end .final-board-container h3 {
+  color: #667eea;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.screen.end .game-stats {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  margin: 20px auto;
+  max-width: 500px;
+}
+
+.screen.end .game-stats p {
+  font-size: 16px;
+  margin: 10px 0;
+  color: #333;
+}
+
+.screen.end .game-stats strong {
+  color: #667eea;
+  font-size: 18px;
+}
+
+.screen.end #replayBtn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-size: 20px;
+  padding: 16px 48px;
+  border-radius: 50px;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.screen.end #replayBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
+}
+
+.screen {
+  max-width: 920px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin: 10px 0;
+}
+.seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card.rules {
+  text-align: left;
+  margin: 14px auto;
+  max-width: 720px;
+}
+.card.rules h2 {
+  margin: 8px 0 6px;
+}
+.card.rules ul {
+  margin: 0 0 0 18px;
+  padding: 0;
+}
+.card.rules li {
+  margin: 6px 0;
+}
+
+.btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #cfd8ff;
+  color: #123;
+  font-weight: 700;
+  transition: transform .06s, filter .2s;
+}
+.btn.primary {
+  background: #3d7cff;
+  color: #fff;
+}
+.btn:hover {
+  filter: brightness(0.95);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Game */
+.top-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.selected-wrap {
+  display: flex;
+  
+  gap: 10px;
+  flex-wrap: wrap;
+  /* Changed to column layout to stack chips and potential score */
+  
+  
+
+  flex-direction: column;
+  align-items: center;}
+
+#selectedLabel {
+  font-weight: 700;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 36px;
+}
+
+/* Added potential score display styling */
+/* Updated potential score styling to work below chips */
+.potential-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 20px;
+  font-size: 14px;
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+  transition: transform 0.2s ease;
+  margin-top: 8px; /* Add spacing from chips */
+}
+
+.potential-score:hover {
+  transform: translateY(-1px);
+}
+
+#potentialScore {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffd54f;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  background: var(--chip);
+  color: var(--chipText);
+  font-weight: 800;
+  border-radius: 999px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(8px);
+  opacity: 0;
+  animation: chipIn .25s ease-out forwards;
+  cursor: grab; /* Added grab cursor for draggable chips */
+  z-index: 1000;
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Added transition for smooth drag feedback */
+  will-change: transform, opacity;
+}
+
+/* Added active drag cursor */
+.chip:active {
+  cursor: grabbing;
+}
+
+.chip:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px); /* Added slight lift on hover */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.18); /* Enhanced shadow on hover */
+}
+@keyframes chipIn {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Added remaining tiles counter styling */
+.remaining-tiles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 20px;
+  font-size: 14px;
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+  transition: transform 0.2s ease;
+  margin-top: 6px; /* Add spacing from chips */
+
+  width: max-content;
+  margin-left: auto;
+  margin-right: auto;}
+
+
+/* Made board responsive for mobile */
+#board {
+  display: grid;
+  grid-template-columns: repeat(5, 70px);
+  gap: 8px;
+  justify-content: center;
+  margin: 16px auto;
+}
+
+@media (max-width: 480px) {
+  #board {
+    grid-template-columns: repeat(5, 56px);
+    gap: 6px;
+  }
+  .tile {
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 24px !important;
+  }
+}
+
+.tile {
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 12px;
+  font-size: 30px;
+  font-weight: 800;
+  border: 2px solid #e2e6f3;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  transition: transform .08s ease, background .25s ease, border-color .2s ease;
+  will-change: transform; /* Added will-change for smoother animations */
+}
+.tile:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+.tile.empty {
+  background: #f1f3f9;
+  color: #c1c6da;
+  border-style: dashed;
+}
+
+.tile.used-player1 {
+  background: var(--p1);
+  color: #fff;
+}
+.tile.used-player2 {
+  background: var(--p2);
+  color: #fff;
+}
+
+/* Added captured tile styles for Go-style locking */
+.tile.captured-player1 {
+  background: #5a9fd4 !important; /* Darker blue for captured P1 tiles */
+  color: #fff;
+  border-color: #4a8fc4;
+}
+
+.tile.captured-player2 {
+  background: #d97a7a !important; /* Darker red for captured P2 tiles */
+  color: #fff;
+  border-color: #c96a6a;
+}
+
+/* Enhanced locked tile styling with lock icon */
+/* Fixed locked tile colors - darker blue for P1, darker red for P2 */
+/* Fixed locked tile pointer-events - only opponent locked tiles should be unclickable */
+/* DO NOT CHANGE THIS LOGIC - Self-locked tiles MUST be clickable */
+.tile.locked-opponent {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.tile.locked-self {
+  cursor: pointer;
+  /* Self-locked tiles remain clickable */
+}
+
+/* Both types of locked tiles get the lock icon */
+.tile.locked-self::before,
+.tile.locked-opponent::before {
+  content: "🔒";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* Darker colors for locked tiles */
+.tile.locked-self.used-player1,
+.tile.locked-opponent.used-player1 {
+  background: #5a9fd4 !important;
+  color: #fff;
+  border-color: #4a8fc4;
+}
+
+.tile.locked-self.used-player2,
+.tile.locked-opponent.used-player2 {
+  background: #d97a7a !important;
+  color: #fff;
+  border-color: #c96a6a;
+}
+
+.tile.locked {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.tile.locked.used-player1 {
+  background: #5a9fd4 !important; /* Darker blue for locked P1 tiles */
+  color: #fff;
+  border-color: #4a8fc4;
+}
+
+.tile.locked.used-player2 {
+  background: #d97a7a !important; /* Darker red for locked P2 tiles */
+  color: #fff;
+  border-color: #c96a6a;
+}
+
+.tile.locked::before {
+  content: "🔒";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* Added capture animation */
+@keyframes captureFlash {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 20px rgba(79, 140, 255, 0.6);
+  }
+}
+
+.tile.captured {
+  animation: captureFlash 0.5s ease-out;
+}
+
+.tile.bonus::after {
+  content: "★";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bonus);
+  color: #000;
+  font-size: 14px;
+  line-height: 22px;
+  border: 1px solid #c4a600;
+}
+
+.controls {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.turn {
+  font-weight: 800;
+}
+
+.msg {
+  min-height: 22px;
+  font-weight: 700;
+}
+
+/* Added score animation */
+@keyframes scoreUp {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.3);
+    color: #4caf50;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.score-animate {
+  animation: scoreUp 0.6s ease-out;
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.legend .box {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid #aaa;
+  margin-right: 4px;
+  font-size: 12px;
+}
+.legend .p1 {
+  background: var(--p1);
+}
+.legend .p2 {
+  background: var(--p2);
+}
+.legend .locked {
+  background: var(--locked);
+}
+/* Removed bonus legend style as bonus system is removed */
+
+/* Enhanced player panel styling with clearer structure */
+.score-area {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.player-panel {
+  background: #fff;
+  padding: 16px;
+  border-radius: 14px;
+  width: 220px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.player-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.panel-player1 {
+  border-color: var(--p1);
+}
+
+.panel-player2 {
+  border-color: var(--p2);
+}
+
+.panel-title {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7f2;
+}
+
+.panel-player1 .panel-title {
+  color: #5a9fd4;
+}
+
+.panel-player2 .panel-title {
+  color: #d97a7a;
+}
+
+.panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fc;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.stat-row:hover {
+  background: #eef1f7;
+}
+
+.stat-label {
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+}
+
+.stat-value {
+  font-weight: 800;
+  font-size: 18px;
+  color: #3d7cff;
+}
+
+/* Added two-column layout for game board and info */
+.game-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.board-section {
+  flex: 0 0 auto;
+}
+
+.info-section {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-section .panel {
+  width: 100%;
+  margin: 0;
+}
+
+.info-section .meaning-box {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Added simple realtime preview styles */
+.meaning-box.checking {
+  color: #666;
+  font-style: italic;
+}
+
+.meaning-box.valid {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.meaning-box.invalid {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.info-section .history {
+  flex: 1;
+}
+
+.info-section #wordHistory {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.panel {
+  background: #fff;
+  padding: 12px;
+  border-radius: 12px;
+  width: 300px;
+  margin: 10px auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: left;
+}
+
+#wordHistory {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+#wordHistory li {
+  padding: 4px 0;
+  border-bottom: 1px dashed #e5e7f2;
+}
+#wordHistory li:last-child {
+  border-bottom: 0;
+}
+.meaning-box {
+  min-height: 48px;
+  white-space: pre-line;
+}
+
+/* Added game stats styling */
+.game-stats {
+  background: #f5f7fb;
+  padding: 16px;
+  border-radius: 10px;
+  margin: 16px 0;
+  text-align: left;
+}
+
+.game-stats p {
+  margin: 8px 0;
+  font-size: 15px;
+}
+
+.game-stats strong {
+  color: #3d7cff;
+}
+
+/* End screen */
+.screen.end h2 {
+  margin-bottom: 12px;
+}
+
+/* Added final board display styling for end screen */
+.final-board-container {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.final-board-container h3 {
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: #3d7cff;
+}
+
+#finalBoard {
+  display: grid;
+  grid-template-columns: repeat(5, 50px);
+  gap: 6px;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+#finalBoard .tile {
+  width: 50px;
+  height: 50px;
+  font-size: 20px;
+  pointer-events: none;
+  cursor: default;
+}
+
+#finalBoard .tile:hover {
+  transform: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Stack layout vertically on mobile */
+  .game-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .info-section {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .panel {
+    width: 100%;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+}
+
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  z-index: 100;
+}
+
+/* Added word suggestions styling for predictive text feature */
+.word-suggestions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+  min-height: 32px;
+  align-items: center;
+}
+
+
+.word-suggestion {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  animation: suggestionFadeIn 0.3s ease-out;
+}
+
+.word-suggestion:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.word-suggestion:active {
+  transform: translateY(0);
+}
+
+@keyframes suggestionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.word-suggestions-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+
+/* Hide the explicit Word: display under the selected alphabet chips */
+.current-word-display {
+  display: none;
+}
+
+
+/* Force player score panels to stay in a single horizontal row */
+.score-area {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+.player-panel {
+  flex: 1 1 0;
+}
+
+
+/* Live status coloring */
+#liveStatusText.status-valid {
+  color: #0a0;
+  font-weight: 600;
+}
+
+#liveStatusText.status-invalid {
+  color: #c00;
+  font-weight: 600;
+}
+
+
+
+
+
+/* Locked tile styles: darken owned tiles when locked */
+.tile.used-player1.locked-p1,
+.tile.used-player2.locked-p2 {
+  filter: brightness(0.8);
+}
+
+#title,
+#gameTitle {
+  text-align: center;
+  margin-top: 32px;
+  margin-bottom: 8px;
+  font-size: 40px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+#selectedLabel {
+  font-weight: 700;
+  text-align: center;
+}
+
+#selectedArea.chips {
+  justify-content: center;
+}
+
+.turn-indicator {
+  text-align: center;
+}
+
+.live-status {
+  text-align: center;
+}
+
+
+.pass-row {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+
+.pass-row {
+  margin-bottom: 4px;
+}
+
+
+.pass-row {
+  margin-bottom: 4px;
+}
+
+
+/* CPU info panel */
+.panel.cpu-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e5e7f2;
+}
+
+.cpu-info .cpu-personality-row,
+.cpu-info .cpu-move-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.cpu-info .label {
+  font-weight: 600;
+  color: #555;
+}
+
+#cpuPersonalityLabel,
+#cpuMoveLabel {
+  font-weight: 700;
+  color: #111827;
+  text-align: right;
+}
+
+/* Tile flash effects for CPU attack/gain */
+.tile-attack-flash {
+  animation: tileAttackFlash 0.5s ease-out;
+}
+
+.tile-gain-flash {
+  animation: tileGainFlash 0.5s ease-out;
+}
+
+@keyframes tileAttackFlash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.9);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(220, 38, 38, 0);
+    transform: scale(1);
+  }
+}
+
+@keyframes tileGainFlash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.9);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(34, 197, 94, 0);
+    transform: scale(1);
+  }
+}
+/* === Responsive tweaks for small screens (smartphones) === */
+@media (max-width: 768px) {
+  .game-container {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .game-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .board-wrapper {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .board {
+    gap: 4px;
+  }
+
+  .tile {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+
+  .selected-letters {
+    margin-top: 8px;
+    font-size: 16px;
+  }
+
+  .side-panel {
+    width: 100%;
+    max-width: 420px;
+    margin-top: 8px;
+  }
+
+  .panel {
+    padding: 10px 12px;
+  }
+
+  .scores-row {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .panel-player1 .name,
+  .panel-player2 .name {
+    font-size: 14px;
+  }
+
+  .panel-player1 .score,
+  .panel-player2 .score {
+    font-size: 18px;
+  }
+
+  .controls-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .controls-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .alphabet-row {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .alphabet-btn {
+    min-width: 30px;
+    padding: 6px 4px;
+    font-size: 14px;
+  }
+
+  .mode-select,
+  .difficulty-select {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .start-screen-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 16px 14px;
+  }
+
+  .start-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
