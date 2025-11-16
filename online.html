@@ -218,7 +218,7 @@
       return result;
     }
 
-    async function createRoom() {
+        async function createRoom() {
       setText("create-room-result", "Creating room...");
       appendDebug("Creating room...");
 
@@ -257,9 +257,17 @@
         `Room created! Share this code with your friend:<br/><span class="online-code">${data.room_code}</span>`
       );
       appendDebug(`Room created with code=${data.room_code}`);
-    }
 
-    async function joinRoom() {
+      // ★ ここからオンラインゲーム画面へ遷移する準備 ★
+      localStorage.setItem("vg_room_code", data.room_code);
+      localStorage.setItem("vg_role", "host");
+      localStorage.setItem("vg_player_token", hostToken);
+
+      // オンライン用ゲーム画面へ
+      window.location.href = "online-game.html";
+    }
+    
+        async function joinRoom() {
       const input = document.getElementById("join-room-code");
       const codeRaw = (input?.value || "").trim().toUpperCase();
       if (!codeRaw) {
@@ -321,8 +329,14 @@
         `Joined room! You are the guest of:<br/><span class="online-code">${updated.room_code}</span>`
       );
       appendDebug("Joined room successfully: id=" + updated.id);
-    }
 
+      // ★ 自分は guest としてオンラインゲーム画面へ ★
+      localStorage.setItem("vg_room_code", updated.room_code);
+      localStorage.setItem("vg_role", "guest");
+      localStorage.setItem("vg_player_token", guestToken);
+
+      window.location.href = "online-game.html";
+    }
     document.addEventListener("DOMContentLoaded", () => {
       const btnCreate = document.getElementById("btn-create-room");
       const btnJoin = document.getElementById("btn-join-room");
