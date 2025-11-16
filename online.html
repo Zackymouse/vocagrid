@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="globals.css" />
   <link rel="stylesheet" href="game.css" />
   <style>
-    /* オンラインロビー用の簡易レイアウト（既存CSSはそのまま利用） */
     body {
       background: #050816;
       color: #f4f4f5;
@@ -181,11 +180,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // ==== Supabase client init ====
-    const SUPABASE_URL = "https://asilqsvfeedeirxadnjb.supabase.co";
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzaWxxc3ZmZWVkZWlyeGFkbmpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzkyMzgsImV4cCI6MjA3ODgxNTIzOH0.wZByhkNnaDBZ0tvmLWVHcpWCSgG6fBkPAVktZTBQtpo";
-
     const { createClient } = supabase;
+
+    const SUPABASE_URL = "https://asilqsvfeedeirxadnjb.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzaWxxc3ZmZWVkZWlyeGFkbmpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzkyMzgsImV4cCI6MjA3ODgxNTIzOH0.wZByhkNnaDBZ0tvmLWVHcpWCSgG6fBkPAVktZTBQtpo";
+
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // ==== Utility: UI helpers ====
@@ -258,7 +257,6 @@
         `Room created! Share this code with your friend:<br/><span class="online-code">${data.room_code}</span>`
       );
       appendDebug(`Room created with code=${data.room_code}`);
-      // 将来的に: localStorage に host_token / room_code を保存してゲーム画面に渡す
     }
 
     async function joinRoom() {
@@ -271,7 +269,6 @@
       setText("join-room-result", "Joining room...");
       appendDebug("Joining room with code=" + codeRaw);
 
-      // 対象の room を取得
       const { data, error } = await supabaseClient
         .from("rooms")
         .select("*")
@@ -313,7 +310,9 @@
           "join-room-result",
           `<span style="color:#f97373;">Failed to join room.</span>`
         );
-        appendDebug("Join room UPDATE ERROR: " + (updateError ? updateError.message : "unknown"));
+        appendDebug(
+          "Join room UPDATE ERROR: " + (updateError ? updateError.message : "unknown")
+        );
         return;
       }
 
@@ -322,7 +321,6 @@
         `Joined room! You are the guest of:<br/><span class="online-code">${updated.room_code}</span>`
       );
       appendDebug("Joined room successfully: id=" + updated.id);
-      // 将来的に: localStorage に guest_token / room_code を保存してゲーム画面に渡す
     }
 
     document.addEventListener("DOMContentLoaded", () => {
