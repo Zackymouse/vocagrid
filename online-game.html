@@ -16,130 +16,64 @@
       <ul id="i18n_rulesList">
         <li>Players take turns selecting tiles to make an English word (2 letters or more).</li>
         <li>When you submit a valid word, those tiles become your color and stay on the board.</li>
-        <li>If you surround one of your own tiles on all four sides, it becomes locked and cannot be captured.</li>
-        <li>You gain +1 point for each tile you convert to your color.</li>
-        <li>The game ends when all tiles are taken or when both players pass consecutively.</li>
+        <li>If you surround one of your own tiles on all four sides with your tiles, that tile becomes <strong>locked</strong>. Locked tiles cannot be used by your opponent, but you can still use them. If the surrounding tiles are taken back, the lock is broken.</li>
+        <li>You gain <strong>+1 point for each tile</strong> that was neutral and becomes yours for the first time.</li>
+        <li>The game ends when all 25 tiles are owned. The player with the higher total points wins.</li>
       </ul>
     </div>
 
-    <div class="card wordscore">
-      <h2 id="i18n_wordScoreTitle">Word Score &amp; Effects</h2>
-      <ul id="i18n_wordScoreList">
-        <li>2–3 letters: +1 bonus</li>
-        <li>4–5 letters: +3 bonus</li>
-        <li>6–7 letters: +5 bonus</li>
-        <li>8+ letters: +8 bonus + special effects (coming soon!)</li>
-      </ul>
-    </div>
-
-    <div class="card controls">
-      <h2 id="i18n_controlsTitle">Controls</h2>
-      <ul id="i18n_controlsList">
-        <li>Tap tiles to select; tap again to deselect.</li>
-        <li>Tap &amp; hold a selected tile to reorder your word.</li>
-        <li>Use <strong>Undo</strong> to remove the last selected tile.</li>
-        <li>Use <strong>Clear</strong> to reset your selection.</li>
-      </ul>
-    </div>
-
-    <div class="card mode-select">
-      <h2 id="i18n_modeSelectTitle">Select Mode</h2>
-      <div class="mode-buttons">
-        <button id="modePVP" class="mode-btn selected">Player vs Player</button>
-        <button id="modePVC" class="mode-btn">Player vs Computer</button>
-      </div>
-
-      <div id="difficultyContainer" class="difficulty-container hidden">
-        <h3 id="i18n_difficultyTitle">CPU Difficulty</h3>
-        <div class="difficulty-buttons">
-          <button class="difficulty-btn selected" data-diff="easy" id="difficultyEasy">Easy</button>
-          <button class="difficulty-btn" data-diff="normal" id="difficultyNormal">Normal</button>
-          <button class="difficulty-btn" data-diff="hard" id="difficultyHard">Hard</button>
-          <button class="difficulty-btn" data-diff="ultimate" id="difficultyUltimate">Ultimate</button>
-        </div>
-      </div>
-
-      <div class="options-row">
-        <div class="option-group">
-          <label for="i18n_languageSelect">Language</label>
-          <select id="i18n_languageSelect">
-            <option value="en">English</option>
-            <option value="ja">日本語</option>
-          </select>
-        </div>
-        <div class="option-group">
-          <label for="corpusSelect" id="i18n_corpusLabel">Corpus Mode</label>
-          <select id="corpusSelect">
-            <option value="none" id="i18n_corpusNone">No corpus</option>
-            <option value="general" id="i18n_corpusGeneral">General corpus</option>
-            <option value="academic" id="i18n_corpusAcademic">Academic corpus</option>
-            <option value="news" id="i18n_corpusNews">News corpus</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="start-controls">
-      <button id="startBtn">Start</button>
-    </div>
-
-    <div class="footer">
-      <p id="i18n_footerCredits">
-        Designed &amp; developed for word enthusiasts. Online mode (prototype) via Supabase.
-      </p>
-    </div>
+    <button id="startBtn" class="btn primary">Start</button>
   </div>
 
   <!-- Game Screen -->
-  <div id="gameScreen" class="screen game hidden">
+  <div id="gameUI" class="screen game hidden">
+    <h1 id="gameTitle">VOCAGRID</h1>
+
+    <button id="backToStartBtn" class="btn back-btn">
+      ← <span id="i18n_backToStart">Back to Start</span>
+    </button>
+
     <div class="top-bar">
-      <button id="backToStartBtn" class="ghost-button">&larr; Back</button>
-      <div class="scoreboard">
-        <div class="score player1">
-          <span class="label" id="i18n_playerLabel">Player</span>
-          <span class="value" id="playerScore">0</span>
+      <div class="selected-wrap">
+        <div class="turn-indicator">
+          <span id="i18n_turnLabel">Turn</span>:
+          <span id="turnIndicator">Player 1</span>
         </div>
-        <div class="turn-indicator" id="turnIndicator">Your turn</div>
-        <div class="score player2">
-          <span class="label" id="i18n_opponentLabel">Opponent</span>
-          <span class="value" id="opponentScore">0</span>
+        <div id="selectedLabel">Selected:</div>
+        <div id="selectedArea" class="chips"></div>
+        <div class="potential-score">
+          <span id="i18n_potentialScore">Potential Score</span>:
+          <span id="potentialScore">—</span>
         </div>
+        <div class="live-status">
+          <span id="liveStatusLabel">Status</span>:
+          <span id="liveStatusText">—</span>
+        </div>
+        <div id="wordSuggestions" class="word-suggestions"></div>
       </div>
-      <div class="language-indicator" id="languageIndicator">EN</div>
     </div>
 
-    <div class="layout-main">
-      <div class="board-wrapper">
+    <div class="remaining-tiles">
+      <span id="i18n_remaining">Remaining tiles</span>:
+      <span id="remainingCount">25</span>
+    </div>
+
+    <div class="game-layout">
+      <div class="board-section">
         <div id="board" class="board"></div>
 
-        <div class="selected-container">
-          <h3 id="i18n_selectedTitle">Selected Tiles</h3>
-          <div id="selectedArea" class="selected-area"></div>
-          <div class="selected-word">
-            <span id="currentWord">–</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="side-panel">
-        <div class="card current-word-card">
-          <h3 id="i18n_currentWordTitle">Current Word</h3>
-          <p id="currentWordDisplay">–</p>
-          <p class="current-word-score" id="currentWordScore">Score: 0</p>
+        <div class="controls">
+          <button id="submitBtn" class="btn primary" type="button">Submit</button>
+          <button id="undoBtn" class="btn ghost" type="button">Undo</button>
+          <button id="clearBtn" class="btn ghost" type="button">Clear</button>
         </div>
 
-        <div class="card actions-card">
-          <h3 id="i18n_actionsTitle">Actions</h3>
-          <div class="button-row">
-            <button id="submitBtn">Submit</button>
-            <button id="undoBtn" class="ghost-button">Undo</button>
-            <button id="clearBtn" class="ghost-button">Clear</button>
-            <button id="passBtn" class="ghost-button">Pass</button>
-          </div>
-        </div>
+        <p id="message" class="msg"></p>
 
-        <div class="card panels-card">
-          <div class="players-panels">
+        <!-- Player box under the board -->
+        <div class="panel scores">
+          <h3 id="i18n_scoresTitle">Scores</h3>
+          <div class="score-area">
             <div class="player-panel panel-player1">
               <h3 class="panel-title">
                 <span id="i18n_player1Panel">Player 1</span>
@@ -147,11 +81,7 @@
               <div class="panel-content">
                 <div class="stat-row">
                   <span class="stat-label" id="i18n_tilesLabel1">Tiles</span>
-                  <span class="stat-value" id="tiles1">0</span>
-                </div>
-                <div class="stat-row">
-                  <span class="stat-label" id="i18n_lockedLabel1">Locked</span>
-                  <span class="stat-value" id="locked1">0</span>
+                  <span class="stat-value" id="score1">0</span>
                 </div>
                 <div class="stat-row">
                   <span class="stat-label" id="i18n_pointsLabel1">Points</span>
@@ -167,11 +97,7 @@
               <div class="panel-content">
                 <div class="stat-row">
                   <span class="stat-label" id="i18n_tilesLabel2">Tiles</span>
-                  <span class="stat-value" id="tiles2">0</span>
-                </div>
-                <div class="stat-row">
-                  <span class="stat-label" id="i18n_lockedLabel2">Locked</span>
-                  <span class="stat-value" id="locked2">0</span>
+                  <span class="stat-value" id="score2">0</span>
                 </div>
                 <div class="stat-row">
                   <span class="stat-label" id="i18n_pointsLabel2">Points</span>
@@ -181,45 +107,850 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="card log-card">
-          <h3 id="i18n_logTitle">Move Log</h3>
-          <div id="logContainer" class="log-container"></div>
+      <!-- Right side: meaning + pass + history -->
+      <div class="side-panel">
+        <div class="pass-row">
+          <button id="passBtn" class="btn ghost" type="button">Pass</button>
+        </div>
+
+        <div class="panel meaning">
+          <h3 id="i18n_meaningTitle">Meaning</h3>
+          <div class="meaning-player" id="meaningP1">
+            <h4>Player 1 last word</h4>
+            <div class="meaning-word" id="meaningWord1">-</div>
+            <div class="meaning-pos" id="meaningPos1"></div>
+            <div class="meaning-def" id="meaningDef1"></div>
+          </div>
+          <div class="meaning-player" id="meaningP2">
+            <h4>Player 2 last word</h4>
+            <div class="meaning-word" id="meaningWord2">-</div>
+            <div class="meaning-pos" id="meaningPos2"></div>
+            <div class="meaning-def" id="meaningDef2"></div>
+          </div>
+        </div>
+
+        <div class="panel history">
+          <h3 id="i18n_history">Word History</h3>
+          <ul id="wordHistory"></ul>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Result Screen -->
-  <div id="resultScreen" class="screen result hidden">
-    <div class="result-card">
-      <h2 id="resultTitle">Game Over</h2>
-      <p id="resultMessage"></p>
-      <div class="result-scores">
-        <div class="score player1">
-          <span class="label" id="i18n_finalPlayerLabel">Player</span>
-          <span class="value" id="finalPlayerScore">0</span>
-        </div>
-        <div class="score player2">
-          <span class="label" id="i18n_finalOpponentLabel">Opponent</span>
-          <span class="value" id="finalOpponentScore">0</span>
-        </div>
-      </div>
-      <div class="result-actions">
-        <button id="replayBtn">Play Again</button>
-        <button id="backToStartFromResultBtn" class="ghost-button">Back to Title</button>
-      </div>
+  <!-- End Screen -->
+  <div id="endScreen" class="screen end hidden">
+    <h2 id="resultText">Game Over</h2>
+
+    <div class="final-board-container">
+      <h3 id="i18n_finalBoard">Final Board</h3>
+      <div id="finalBoard" class="board"></div>
     </div>
+
+    <div id="gameStats" class="game-stats"></div>
+
+    <button id="replayBtn" class="btn primary" type="button">Replay</button>
   </div>
 
-  <!-- ↓↓↓ ここまでは聖域 index.html と同じゲーム本体スクリプト ↓↓↓ -->
   <script>
-    /* ここに入っている JS は聖域 index.html と同一。
-       （長いので省略せずそのまま貼ってあります） */
-    /* ... すでにあなたの聖域 index.html に入っている
-       すべてのゲームロジックがここに丸ごと入ります ... */
+window.addEventListener("DOMContentLoaded", function () {
+  const BOARD_SIZE = 5;
+  const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const DICT_API_BASE = "https://api.dictionaryapi.dev/api/v2/entries/en/";
+
+  // Approximate English letter frequencies (higher = more common)
+  const LETTER_FREQ = {
+    A: 8.2, B: 1.5, C: 2.8, D: 4.3, E: 12.0, F: 2.2, G: 2.0,
+    H: 6.1, I: 7.0, J: 0.2, K: 0.8, L: 4.0, M: 2.4, N: 6.7,
+    O: 7.5, P: 1.9, Q: 0.1, R: 6.0, S: 6.3, T: 9.1, U: 2.8,
+    V: 1.0, W: 2.4, X: 0.2, Y: 2.0, Z: 0.1
+  };
+
+  const VOWELS = ["A", "E", "I", "O", "U"];
+  const MAX_PER_LETTER = 2;
+
+  // Cache for dictionary lookups: word(lowercase) -> boolean (exists or not)
+  const dictCache = new Map();
+
+  // --- Game state ---
+  let tiles = [];
+  let currentPlayer = 1; // 1 or 2
+  let selectedIds = [];
+  const points = { 1: 0, 2: 0 }; // number of first-time captured tiles
+  let history = [];
+  let isChecking = false; // to prevent double submit
+  let draggedSelectedIndex = null; // index in selectedIds for drag & drop
+
+  // DOM elements
+  const startScreen = document.getElementById("startScreen");
+  const gameUI = document.getElementById("gameUI");
+  const endScreen = document.getElementById("endScreen");
+
+  const boardEl = document.getElementById("board");
+  const selectedArea = document.getElementById("selectedArea");
+  const potentialScoreEl = document.getElementById("potentialScore");
+  const liveStatusText = document.getElementById("liveStatusText");
+  const remainingCountEl = document.getElementById("remainingCount");
+  const turnIndicatorEl = document.getElementById("turnIndicator");
+  const messageEl = document.getElementById("message");
+  const wordHistoryEl = document.getElementById("wordHistory");
+  const score1El = document.getElementById("score1");
+  const score2El = document.getElementById("score2");
+  const points1El = document.getElementById("points1");
+  const points2El = document.getElementById("points2");
+
+  const resultTextEl = document.getElementById("resultText");
+  const finalBoardEl = document.getElementById("finalBoard");
+  const gameStatsEl = document.getElementById("gameStats");
+
+  const startBtn = document.getElementById("startBtn");
+  const backToStartBtn = document.getElementById("backToStartBtn");
+  const submitBtn = document.getElementById("submitBtn");
+  const undoBtn = document.getElementById("undoBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const replayBtn = document.getElementById("replayBtn");
+  const passBtn = document.getElementById("passBtn");
+
+  const meaningWord1El = document.getElementById("meaningWord1");
+  const meaningPos1El = document.getElementById("meaningPos1");
+  const meaningDef1El = document.getElementById("meaningDef1");
+  const meaningWord2El = document.getElementById("meaningWord2");
+  const meaningPos2El = document.getElementById("meaningPos2");
+  const meaningDef2El = document.getElementById("meaningDef2");
+
+  let liveCheckVersion = 0;
+
+  // Track words already used in this game and consecutive passes
+  let usedWords = new Set();
+  let consecutivePasses = 0;
+
+  function resetLiveStatus() {
+    if (liveStatusText) {
+      liveStatusText.textContent = "—";
+      liveStatusText.classList.remove("status-valid", "status-invalid");
+    }
+  }
+
+  // --- Online dictionary helpers ---
+  async function isInDictionary(word) {
+    const key = (word || "").toLowerCase();
+    if (!key) return false;
+
+    if (dictCache.has(key)) {
+      return dictCache.get(key);
+    }
+
+    try {
+      const res = await fetch(DICT_API_BASE + encodeURIComponent(key));
+      if (!res.ok) {
+        // 404 etc. -> treat as not found
+        dictCache.set(key, false);
+        return false;
+      }
+      const data = await res.json();
+      const exists = Array.isArray(data) && data.length > 0;
+      dictCache.set(key, exists);
+      return exists;
+    } catch (e) {
+      // Network error: treat as not found for now
+      dictCache.set(key, false);
+      return false;
+    }
+  }
+
+  async function fetchMeaning(word) {
+    const key = (word || "").toLowerCase();
+    try {
+      const res = await fetch(DICT_API_BASE + encodeURIComponent(key));
+      if (!res.ok) {
+        return null;
+      }
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) return null;
+
+      const entry = data[0];
+      let pos = "";
+      let def = "";
+
+      if (entry.meanings && entry.meanings.length > 0) {
+        const m = entry.meanings[0];
+        pos = m.partOfSpeech || "";
+        if (m.definitions && m.definitions.length > 0) {
+          const d = m.definitions[0];
+          def = d.definition || "";
+        }
+      }
+
+      return { word: key, pos, def };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // --- Word validation with online dictionary + inflection rules ---
+  async function validateWord(word) {
+    const lower = (word || "").toLowerCase();
+    const upper = lower.toUpperCase();
+
+    if (upper.length < 2) {
+      return {
+        ok: false,
+        reason: "Please make a word with at least 2 letters."
+      };
+    }
+
+    // Disallow reusing the same word within a single game
+    if (usedWords.has(lower)) {
+      return {
+        ok: false,
+        reason: "This word has already been used in this game."
+      };
+    }
+
+    // Reject -ed past tense if base form exists
+    if (lower.endsWith("ed") && lower.length > 3) {
+      const base = lower.slice(0, -2);
+      if (base.length >= 2) {
+        const baseExists = await isInDictionary(base);
+        if (baseExists) {
+          return {
+            ok: false,
+            reason: `Past tense (-ed) is not allowed. Please use the base form "${base}" instead.`
+          };
+        }
+      }
+    }
+
+    // Reject -s / -es forms if base form exists
+    if (lower.endsWith("s") && lower.length > 2) {
+      let baseExists = false;
+
+      const noS = lower.slice(0, -1);
+      if (noS.length >= 2) {
+        baseExists = await isInDictionary(noS);
+      }
+
+      if (!baseExists && lower.endsWith("es")) {
+        const noES = lower.slice(0, -2);
+        if (noES.length >= 2) {
+          baseExists = await isInDictionary(noES);
+        }
+      }
+
+      if (baseExists) {
+        return {
+          ok: false,
+          reason: "Forms ending in -s or -es (3rd person or plural) are not allowed. Please use the base form instead."
+        };
+      }
+    }
+
+    // Finally, check the word itself in the dictionary
+    const exists = await isInDictionary(lower);
+    if (!exists) {
+      return {
+        ok: false,
+        reason: "This word is not in the online dictionary."
+      };
+    }
+
+    return { ok: true, reason: "OK" };
+  }
+
+  // --- Letter generation helpers ---
+  function pickWeightedLetter(counts) {
+    let total = 0;
+    const candidates = [];
+
+    for (const ch of LETTERS) {
+      const used = counts[ch] || 0;
+      if (used >= MAX_PER_LETTER) continue;
+      const w = LETTER_FREQ[ch] || 1;
+      if (w <= 0) continue;
+      total += w;
+      candidates.push({ ch, cumulative: total });
+    }
+
+    if (candidates.length === 0) {
+      return "E";
+    }
+
+    const r = Math.random() * total;
+    for (const c of candidates) {
+      if (r < c.cumulative) return c.ch;
+    }
+    return candidates[candidates.length - 1].ch;
+  }
+
+  function createInitialTiles() {
+    tiles = [];
+
+    const grid = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(null)
+    );
+
+    const counts = {};
+    for (const ch of LETTERS) counts[ch] = 0;
+
+    const positions = [];
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        positions.push({ r, c });
+      }
+    }
+    for (let i = positions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = positions[i];
+      positions[i] = positions[j];
+      positions[j] = tmp;
+    }
+
+    let posIndex = 0;
+
+    // Place each vowel at least once
+    for (const v of VOWELS) {
+      const { r, c } = positions[posIndex++];
+      grid[r][c] = v;
+      counts[v] = (counts[v] || 0) + 1;
+    }
+
+    // Fill remaining cells with weighted letters, max 2 per letter
+    for (; posIndex < positions.length; posIndex++) {
+      const { r, c } = positions[posIndex];
+      const ch = pickWeightedLetter(counts);
+      grid[r][c] = ch;
+      counts[ch] = (counts[ch] || 0) + 1;
+    }
+
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        tiles.push({
+          id: r + "-" + c,
+          row: r,
+          col: c,
+          letter: grid[r][c],
+          owner: null,
+          lockOwner: null
+        });
+      }
+    }
+  }
+
+  function calcCounts() {
+    let tiles1 = 0;
+    let tiles2 = 0;
+    let remaining = 0;
+    tiles.forEach((t) => {
+      if (t.owner === 1) tiles1++;
+      else if (t.owner === 2) tiles2++;
+      else remaining++;
+    });
+    return { tiles1, tiles2, remaining };
+  }
+
+  function recalcLocks() {
+    // Recalculate lockOwner for all tiles based on surrounding owners
+    tiles.forEach((t) => {
+      t.lockOwner = null;
+    });
+
+    function getTileAt(r, c) {
+      return tiles.find((tt) => tt.row === r && tt.col === c);
+    }
+
+    tiles.forEach((t) => {
+      // Only lock tiles that are already owned; neutral tiles cannot be locked
+      if (t.owner === null) {
+        t.lockOwner = null;
+        return;
+      }
+      const neighbors = [];
+      if (t.row > 0) neighbors.push(getTileAt(t.row - 1, t.col));
+      if (t.row < BOARD_SIZE - 1) neighbors.push(getTileAt(t.row + 1, t.col));
+      if (t.col > 0) neighbors.push(getTileAt(t.row, t.col - 1));
+      if (t.col < BOARD_SIZE - 1) neighbors.push(getTileAt(t.row, t.col + 1));
+
+      if (neighbors.length === 0) return;
+
+      let owner = null;
+      for (const n of neighbors) {
+        if (!n || n.owner === null) {
+          owner = null;
+          break;
+        }
+        if (owner === null) {
+          owner = n.owner;
+        } else if (owner !== n.owner) {
+          owner = null;
+          break;
+        }
+      }
+
+      if (owner !== null && t.owner === owner) {
+        t.lockOwner = owner;
+      }
+    });
+  }
+
+
+  function renderBoard(targetEl, useCurrentSelection) {
+    targetEl.innerHTML = "";
+    tiles.forEach((t) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.classList.add("tile");
+      if (t.owner === 1) btn.classList.add("used-player1");
+      if (t.owner === 2) btn.classList.add("used-player2");
+      if (t.lockOwner === 1) btn.classList.add("locked-p1");
+      if (t.lockOwner === 2) btn.classList.add("locked-p2");
+
+      const isSelected = useCurrentSelection && selectedIds.includes(t.id);
+      btn.textContent = isSelected ? "" : t.letter;
+      btn.dataset.id = t.id;
+
+      if (targetEl === boardEl) {
+        btn.addEventListener("click", handleTileClick);
+      }
+
+      targetEl.appendChild(btn);
+    });
+  }
+
+  function buildCurrentWord() {
+    let word = "";
+    selectedIds.forEach((id) => {
+      const tile = tiles.find((t) => t.id === id);
+      if (tile) word += tile.letter;
+    });
+    return word;
+  }
+
+  function updateSelectedUI() {
+    selectedArea.innerHTML = "";
+    let word = "";
+    selectedIds.forEach((id) => {
+      const tile = tiles.find((t) => t.id === id);
+      if (!tile) return;
+      word += tile.letter;
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = tile.letter;
+      chip.dataset.id = id;
+      chip.setAttribute("draggable", "true");
+      selectedArea.appendChild(chip);
+    });
+
+    if (word.length >= 2) {
+      let gain = 0;
+      selectedIds.forEach((id) => {
+        const tile = tiles.find((t) => t.id === id);
+        if (tile && tile.owner === null) gain++;
+      });
+      potentialScoreEl.textContent = gain.toString();
+    } else {
+      potentialScoreEl.textContent = "—";
+    }
+
+    triggerLiveValidation();
+  }
+
+  function updateScoresUI() {
+    const { tiles1, tiles2, remaining } = calcCounts();
+    score1El.textContent = String(tiles1);
+    score2El.textContent = String(tiles2);
+    points1El.textContent = String(points[1]);
+    points2El.textContent = String(points[2]);
+    remainingCountEl.textContent = String(remaining);
+  }
+
+  function updateTurnUI() {
+    if (!turnIndicatorEl) return;
+    const isP1 = currentPlayer === 1;
+    turnIndicatorEl.textContent = isP1 ? "Player 1" : "Player 2";
+    // Change text color directly so it always reflects current player
+    turnIndicatorEl.style.color = isP1 ? "var(--p1)" : "var(--p2)";
+    turnIndicatorEl.style.fontWeight = "700";
+  }
+
+  function renderHistory() {
+    wordHistoryEl.innerHTML = "";
+    history.forEach((entry) => {
+      const li = document.createElement("li");
+      li.innerHTML =
+        "<strong>" +
+        (entry.player === 1 ? "P1" : "P2") +
+        ":</strong> " +
+        entry.word +
+        " (+" +
+        entry.gain +
+        ")";
+      wordHistoryEl.appendChild(li);
+    });
+  }
+
+  function resetMeaningBoxes() {
+    meaningWord1El.textContent = "-";
+    meaningPos1El.textContent = "";
+    meaningDef1El.textContent = "";
+    meaningWord2El.textContent = "-";
+    meaningPos2El.textContent = "";
+    meaningDef2El.textContent = "";
+  }
+
+  function applyMeaningToBox(player, info, fallbackWord) {
+    const word = info && info.word ? info.word : (fallbackWord || "-");
+    const pos = info && info.pos ? info.pos : "";
+    const def = info && info.def ? info.def : "No definition found.";
+
+    if (player === 1) {
+      meaningWord1El.textContent = word;
+      meaningPos1El.textContent = pos;
+      meaningDef1El.textContent = def;
+    } else {
+      meaningWord2El.textContent = word;
+      meaningPos2El.textContent = pos;
+      meaningDef2El.textContent = def;
+    }
+  }
+
+  async function updateMeaningBoxForPlayer(player, word) {
+    const info = await fetchMeaning(word);
+    applyMeaningToBox(player, info, word.toLowerCase());
+  }
+
+  function triggerLiveValidation() {
+    if (!liveStatusText) return;
+    const word = buildCurrentWord();
+    liveStatusText.classList.remove("status-valid", "status-invalid");
+    if (!word || word.length < 2) {
+      liveStatusText.textContent = "—";
+      return;
+    }
+    const current = ++liveCheckVersion;
+    liveStatusText.textContent = "Checking...";
+    validateWord(word).then((result) => {
+      if (current !== liveCheckVersion) return;
+      liveStatusText.textContent = result.ok ? "Valid" : "Invalid";
+      if (result.ok) {
+        liveStatusText.classList.add("status-valid");
+      } else {
+        liveStatusText.classList.add("status-invalid");
+      }
+    }).catch(() => {
+      if (current !== liveCheckVersion) return;
+      liveStatusText.textContent = "—";
+    });
+  }
+
+  function resetGameState() {
+    createInitialTiles();
+    currentPlayer = 1;
+    selectedIds = [];
+    points[1] = 0;
+    points[2] = 0;
+    history = [];
+    usedWords = new Set();
+    consecutivePasses = 0;
+    messageEl.textContent = "";
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    updateScoresUI();
+    updateTurnUI();
+    renderHistory();
+    resetMeaningBoxes();
+    resetLiveStatus();
+  }
+
+  function startGame() {
+    startScreen.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    gameUI.classList.remove("hidden");
+    resetGameState();
+  }
+
+  function backToStart() {
+    gameUI.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+  }
+
+  function handleTileClick(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id) return;
+    const tile = tiles.find((t) => t.id === id);
+    if (!tile) return;
+    if (tile.lockOwner && tile.lockOwner !== currentPlayer) {
+      messageEl.textContent = "You cannot use an opponent's locked tile.";
+      return;
+    }
+    const idx = selectedIds.indexOf(id);
+    if (idx === -1) {
+      selectedIds.push(id);
+    } else {
+      selectedIds.splice(idx, 1);
+    }
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    messageEl.textContent = "";
+  }
+
+  function clearSelection() {
+    selectedIds = [];
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    resetLiveStatus();
+    messageEl.textContent = "";
+  }
+
+  function undoSelection() {
+    if (selectedIds.length === 0) return;
+    selectedIds.pop();
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    resetLiveStatus();
+    messageEl.textContent = "";
+  }
+
+  async function submitWord() {
+    if (isChecking) return;
+
+    const word = buildCurrentWord();
+
+    if (selectedIds.length === 0) {
+      messageEl.textContent = "No tiles are selected.";
+      return;
+    }
+
+    if (word.length < 2) {
+      messageEl.textContent =
+        "Invalid word: Please make a word with at least 2 letters.";
+      return;
+    }
+
+    messageEl.textContent = "Checking word...";
+    isChecking = true;
+    const validation = await validateWord(word);
+    isChecking = false;
+
+    if (!validation.ok) {
+      messageEl.textContent = "Invalid word: " + validation.reason;
+      return;
+    }
+
+    const lowerWord = word.toLowerCase();
+    if (usedWords.has(lowerWord)) {
+      messageEl.textContent = "Invalid word: This word has already been used in this game.";
+      return;
+    }
+
+    let gain = 0;
+
+    selectedIds.forEach((id) => {
+      const tile = tiles.find((t) => t.id === id);
+      if (!tile) return;
+      if (tile.owner === null) {
+        gain++;
+        points[currentPlayer]++;
+      }
+      tile.owner = currentPlayer;
+    });
+
+    history.unshift({
+      player: currentPlayer,
+      word: word.toUpperCase(),
+      gain: gain
+    });
+
+    usedWords.add(lowerWord);
+    consecutivePasses = 0;
+
+    updateMeaningBoxForPlayer(currentPlayer, word);
+
+    selectedIds = [];
+    recalcLocks();
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    updateScoresUI();
+    renderHistory();
+    messageEl.textContent = "";
+
+    const allOwned = tiles.every((t) => t.owner !== null);
+    if (allOwned) {
+      endGame();
+    } else {
+      currentPlayer = currentPlayer === 1 ? 2 : 1;
+      updateTurnUI();
+    }
+  }
+
+
+  function handlePass() {
+    // Record the pass in history
+    history.unshift({
+      player: currentPlayer,
+      word: "(PASS)",
+      gain: 0
+    });
+
+    selectedIds = [];
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    renderHistory();
+    messageEl.textContent = "Player " + currentPlayer + " passes.";
+
+    consecutivePasses += 1;
+
+    // Two consecutive passes (P1 -> P2) ends the game
+    if (consecutivePasses >= 2) {
+      endGame();
+      return;
+    }
+
+    currentPlayer = currentPlayer === 1 ? 2 : 1;
+    updateTurnUI();
+  }
+
+  function endGame() {
+    gameUI.classList.add("hidden");
+    endScreen.classList.remove("hidden");
+
+    const { tiles1, tiles2 } = calcCounts();
+    const p1 = points[1];
+    const p2 = points[2];
+
+    if (p1 > p2) {
+      resultTextEl.textContent = "Player 1 wins!";
+    } else if (p2 > p1) {
+      resultTextEl.textContent = "Player 2 wins!";
+    } else {
+      resultTextEl.textContent = "Draw!";
+    }
+
+    renderBoard(finalBoardEl, false);
+
+    gameStatsEl.innerHTML = "";
+    const p = document.createElement("p");
+    p.innerHTML =
+      "<strong>Player 1</strong> – Tiles: " +
+      tiles1 +
+      ", Points: " +
+      p1 +
+      "<br>" +
+      "<strong>Player 2</strong> – Tiles: " +
+      tiles2 +
+      ", Points: " +
+      p2 +
+      "<br>" +
+      "Total unique tiles captured: " +
+      (p1 + p2) +
+      " / 25";
+    gameStatsEl.appendChild(p);
+
+    if (history.length > 0) {
+      const lastEntry = history[0];
+      let longestEntry = history[0];
+      history.forEach((entry) => {
+        if (entry.word && entry.word.length > longestEntry.word.length) {
+          longestEntry = entry;
+        }
+      });
+
+      const lastP = document.createElement("p");
+      lastP.innerHTML =
+        "<strong>Last word used:</strong> " +
+        lastEntry.word +
+        " (" +
+        (lastEntry.player === 1 ? "Player 1" : "Player 2") +
+        ")";
+
+      const longestP = document.createElement("p");
+      longestP.innerHTML =
+        "<strong>Longest word used:</strong> " +
+        longestEntry.word +
+        " (" +
+        longestEntry.word.length +
+        " letters, " +
+        (longestEntry.player === 1 ? "Player 1" : "Player 2") +
+        ")";
+
+      gameStatsEl.appendChild(lastP);
+      gameStatsEl.appendChild(longestP);
+    }
+  }
+
+  // Selected area drag & drop + tap handlers (event delegation)
+  selectedArea.addEventListener("dragstart", (e) => {
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+    const id = chip.dataset.id;
+    draggedSelectedIndex = selectedIds.indexOf(id);
+    if (draggedSelectedIndex === -1) {
+      draggedSelectedIndex = null;
+      return;
+    }
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+    }
+  });
+
+  selectedArea.addEventListener("dragover", (e) => {
+    if (draggedSelectedIndex === null) return;
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "move";
+    }
+  });
+
+  selectedArea.addEventListener("drop", (e) => {
+    if (draggedSelectedIndex === null) return;
+    e.preventDefault();
+    const chip = e.target.closest(".chip");
+    let toIndex = selectedIds.length - 1;
+    if (chip) {
+      const id = chip.dataset.id;
+      const idx = selectedIds.indexOf(id);
+      if (idx !== -1) {
+        toIndex = idx;
+      }
+    }
+    const fromIndex = draggedSelectedIndex;
+    if (fromIndex !== toIndex && fromIndex >= 0 && fromIndex < selectedIds.length) {
+      const moved = selectedIds.splice(fromIndex, 1)[0];
+      selectedIds.splice(toIndex, 0, moved);
+      updateSelectedUI();
+    }
+    draggedSelectedIndex = null;
+  });
+
+  selectedArea.addEventListener("dragend", () => {
+    draggedSelectedIndex = null;
+  });
+
+  selectedArea.addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+    const id = chip.dataset.id;
+    const idx = selectedIds.indexOf(id);
+    if (idx !== -1) {
+      selectedIds.splice(idx, 1);
+      renderBoard(boardEl, true);
+      updateSelectedUI();
+      messageEl.textContent = "";
+    }
+  });
+
+  // Event listeners
+  startBtn.addEventListener("click", startGame);
+  backToStartBtn.addEventListener("click", backToStart);
+  replayBtn.addEventListener("click", startGame);
+  submitBtn.addEventListener("click", submitWord);
+  undoBtn.addEventListener("click", undoSelection);
+  clearBtn.addEventListener("click", clearSelection);
+  passBtn.addEventListener("click", handlePass);
+});
+
   </script>
-  <!-- ↑↑↑ 聖域ゲームロジックここまで（この部分は index.html と完全一致） ↑↑↑ -->
 
   <!-- Supabase JS client for online mode -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -289,3 +1020,4 @@
   </script>
 </body>
 </html>
+
