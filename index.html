@@ -22,10 +22,19 @@
       </ul>
     </div>
 
-    <div class="start-buttons">
-      <button id="startBtn" class="btn primary" type="button">Start</button>
-      <button id="onlineBtn" class="btn ghost" type="button">Online</button>
+    <button id="startBtn" class="btn primary">Start</button>
+    <button id="onlineBtn" class="btn ghost">Online</button>
+  </div>
+
+  <!-- Online Screen (added) -->
+  <div id="onlineScreen" class="screen online hidden">
+    <h1>VOCAGRID Online</h1>
+    <div class="card rules">
+      <h2>Online Mode (beta)</h2>
+      <p>This is a placeholder screen for future online battles. Offline PvP / PvC modes are unchanged.</p>
+      <p>You can return to the start screen and use the normal modes anytime.</p>
     </div>
+    <button id="onlineBackBtn" class="btn ghost">Back to Start</button>
   </div>
 
   <!-- Game Screen -->
@@ -156,18 +165,7 @@
     <button id="replayBtn" class="btn primary" type="button">Replay</button>
   </div>
 
-  
-  <!-- Online Screen -->
-  <div id="onlineScreen" class="screen online hidden">
-    <h2>Online Mode (beta)</h2>
-    <p>Online battles will be available here. This is the lobby screen placeholder.</p>
-    <div class="online-controls">
-      <p>You can come back to the start screen for now.</p>
-    </div>
-    <button id="onlineBackBtn" class="btn ghost" type="button">Back</button>
-  </div>
-
-<script>
+  <script>
 window.addEventListener("DOMContentLoaded", function () {
   const BOARD_SIZE = 5;
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -200,9 +198,6 @@ window.addEventListener("DOMContentLoaded", function () {
   const startScreen = document.getElementById("startScreen");
   const gameUI = document.getElementById("gameUI");
   const endScreen = document.getElementById("endScreen");
-  const onlineScreen = document.getElementById("onlineScreen");
-  const onlineBtn = document.getElementById("onlineBtn");
-  const onlineBackBtn = document.getElementById("onlineBackBtn");
 
   const boardEl = document.getElementById("board");
   const selectedArea = document.getElementById("selectedArea");
@@ -228,6 +223,10 @@ window.addEventListener("DOMContentLoaded", function () {
   const clearBtn = document.getElementById("clearBtn");
   const replayBtn = document.getElementById("replayBtn");
   const passBtn = document.getElementById("passBtn");
+
+  const onlineBtn = document.getElementById("onlineBtn");
+  const onlineScreen = document.getElementById("onlineScreen");
+  const onlineBackBtn = document.getElementById("onlineBackBtn");
 
   const meaningWord1El = document.getElementById("meaningWord1");
   const meaningPos1El = document.getElementById("meaningPos1");
@@ -692,6 +691,25 @@ window.addEventListener("DOMContentLoaded", function () {
     startScreen.classList.remove("hidden");
   }
 
+  // Online screen helpers (added)
+  function showOnlineScreen() {
+    if (onlineScreen) {
+      startScreen.classList.add("hidden");
+      gameUI.classList.add("hidden");
+      endScreen.classList.add("hidden");
+      onlineScreen.classList.remove("hidden");
+    }
+  }
+
+  function showStartScreen() {
+    if (onlineScreen) {
+      onlineScreen.classList.add("hidden");
+    }
+    gameUI.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+  }
+
   function handleTileClick(e) {
     const id = e.currentTarget.dataset.id;
     if (!id) return;
@@ -966,17 +984,11 @@ window.addEventListener("DOMContentLoaded", function () {
   clearBtn.addEventListener("click", clearSelection);
   passBtn.addEventListener("click", handlePass);
 
-  if (onlineBtn && onlineScreen && startScreen) {
-    onlineBtn.addEventListener("click", function () {
-      startScreen.classList.add("hidden");
-      onlineScreen.classList.remove("hidden");
-    });
+  if (onlineBtn && onlineScreen) {
+    onlineBtn.addEventListener("click", showOnlineScreen);
   }
-  if (onlineBackBtn && onlineScreen && startScreen) {
-    onlineBackBtn.addEventListener("click", function () {
-      onlineScreen.classList.add("hidden");
-      startScreen.classList.remove("hidden");
-    });
+  if (onlineBackBtn) {
+    onlineBackBtn.addEventListener("click", showStartScreen);
   }
 });
 
