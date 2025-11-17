@@ -5,29 +5,8 @@
   <title>VOCAGRID – Online Dictionary + Corpus Board</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="game.css" />
-  <!-- Supabase CDN（オンラインロビー用） -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <!-- オンライン状態バッジ（HOST / GUEST / Room code） -->
-  <div
-    id="onlineBadge"
-    class="hidden"
-    style="
-      position: fixed;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #333;
-      color: #fff;
-      padding: 4px 12px;
-      border-radius: 16px;
-      font-size: 12px;
-      z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    "
-  ></div>
-
   <!-- Start Screen -->
   <div id="startScreen" class="screen start">
     <h1 id="title">VOCAGRID</h1>
@@ -43,69 +22,25 @@
       </ul>
     </div>
 
-    <!-- モード選択：PvP / PvC / Online -->
+    <!-- 対戦モード選択 -->
     <div class="row">
       <div class="seg">
         <label>
           <input type="radio" name="mode" value="pvp" checked />
-          Player vs Player
+          PvP
         </label>
         <label>
           <input type="radio" name="mode" value="pvc" />
-          Player vs Computer
+          Vs Computer (Easy)
         </label>
         <label>
-          <input type="radio" name="mode" value="online" />
-          Online (prototype)
+          <input type="radio" name="mode" value="online" disabled />
+          Online (coming soon)
         </label>
-      </div>
-    </div>
-
-    <!-- 難易度（とりあえず UI だけ。PvC のときだけ表示） -->
-    <div class="row" id="difficultyRow" style="display: none;">
-      <span>Difficulty:&nbsp;</span>
-      <div class="seg">
-        <label><input type="radio" name="difficulty" value="easy" checked /> Easy</label>
-        <label><input type="radio" name="difficulty" value="normal" /> Normal</label>
-        <label><input type="radio" name="difficulty" value="hard" /> Hard</label>
-        <label><input type="radio" name="difficulty" value="ultimate" /> Ultimate</label>
       </div>
     </div>
 
     <button id="startBtn" class="btn primary">Start</button>
-  </div>
-
-  <!-- Online Lobby Screen（オンラインロビー） -->
-  <div id="onlineLobby" class="screen start hidden">
-    <h2>VocaGrid Online</h2>
-    <p>プロトタイプ版オンラインロビーです。プライベートルームの作成 / 参加ができます。</p>
-
-    <div class="row">
-      <button id="createRoomBtn" class="btn primary" type="button">Create Room</button>
-      <span id="createRoomResult" style="margin-left: 8px;"></span>
-    </div>
-
-    <div class="row">
-      <input
-        id="joinRoomCode"
-        type="text"
-        placeholder="Room code (例: AB3FQK)"
-        style="padding: 8px 10px; border-radius: 8px; border: 1px solid #ccc; max-width: 180px;"
-      />
-      <button id="joinRoomBtn" class="btn" type="button">Join Room</button>
-    </div>
-
-    <div class="row">
-      <button id="backToOfflineBtn" class="btn" type="button">← Back to offline VocaGrid</button>
-    </div>
-
-    <div class="panel" style="max-width: 640px; margin-top: 16px;">
-      <strong>Debug</strong>
-      <pre
-        id="onlineDebug"
-        style="white-space: pre-wrap; font-size: 12px; max-height: 200px; overflow-y: auto; margin-top: 8px;"
-      ></pre>
-    </div>
   </div>
 
   <!-- Game Screen -->
@@ -242,22 +177,19 @@ window.addEventListener("DOMContentLoaded", function () {
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const DICT_API_BASE = "https://api.dictionaryapi.dev/api/v2/entries/en/";
 
-  // Supabase（オンラインロビー用）
-  const SUPABASE_URL = "https://asilqsvfeedeirxadnjb.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzaWxxc3ZmZWVkZWlyeGFkbmpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzkyMzgsImV4cCI6MjA3ODgxNTIzOH0.wZByhkNnaDBZ0tvmLWVHcpWCSgG6fBkPAVktZTBQtpo";
+  // ゲームモード & CPU 定義
+  const GAME_MODE = {
+    PVP: "pvp",
+    PVC: "pvc",
+    ONLINE: "online"
+  };
+  const CPU_PLAYER = 2;
 
-  let supabaseClient = null;
-  if (window.supabase) {
-    const { createClient } = window.supabase;
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
-
-  // モード / 難易度
-  let gameMode = "pvp";       // "pvp" | "pvc" | "online"
-  let cpuDifficulty = "easy"; // まだ未使用。PvC 実装時に使う
-  let onlineRole = null;      // "host" | "guest" | null
-  let onlineRoomCode = null;  // 6桁のコード
+  // CPUが使うシンプルな単語リスト（全部オンライン辞書にある想定）
+  const CPU_WORDS = [
+    "AT","IN","ON","TO","IT","AN","NO","AS","IS","BE",
+    "DO","GO","UP","OUT","INTO","OVER","TIME","WORD","GAME"
+  ];
 
   // Approximate English letter frequencies (higher = more common)
   const LETTER_FREQ = {
@@ -281,12 +213,13 @@ window.addEventListener("DOMContentLoaded", function () {
   let history = [];
   let isChecking = false; // to prevent double submit
   let draggedSelectedIndex = null; // index in selectedIds for drag & drop
+  let gameMode = GAME_MODE.PVP;
 
   // DOM elements
   const startScreen = document.getElementById("startScreen");
   const gameUI = document.getElementById("gameUI");
   const endScreen = document.getElementById("endScreen");
-  const onlineLobby = document.getElementById("onlineLobby");
+  const modeRadios = document.querySelectorAll('input[name="mode"]');
 
   const boardEl = document.getElementById("board");
   const selectedArea = document.getElementById("selectedArea");
@@ -320,18 +253,6 @@ window.addEventListener("DOMContentLoaded", function () {
   const meaningPos2El = document.getElementById("meaningPos2");
   const meaningDef2El = document.getElementById("meaningDef2");
 
-  const modeRadios = document.querySelectorAll('input[name="mode"]');
-  const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
-  const difficultyRow = document.getElementById("difficultyRow");
-
-  const onlineBadge = document.getElementById("onlineBadge");
-  const createRoomBtn = document.getElementById("createRoomBtn");
-  const joinRoomBtn = document.getElementById("joinRoomBtn");
-  const joinRoomCodeInput = document.getElementById("joinRoomCode");
-  const createRoomResultEl = document.getElementById("createRoomResult");
-  const onlineDebug = document.getElementById("onlineDebug");
-  const backToOfflineBtn = document.getElementById("backToOfflineBtn");
-
   let liveCheckVersion = 0;
 
   // Track words already used in this game and consecutive passes
@@ -345,147 +266,7 @@ window.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // === Online helpers =======================================================
-  function appendDebug(msg) {
-    if (!onlineDebug) return;
-    const now = new Date().toLocaleTimeString();
-    onlineDebug.textContent = `[${now}] ${msg}\n` + onlineDebug.textContent;
-  }
-
-  function generateRoomCode(length = 6) {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let result = "";
-    for (let i = 0; i < length; i++) {
-      result += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return result;
-  }
-
-  function updateOnlineBadge() {
-    if (!onlineBadge) return;
-    if (!onlineRole || !onlineRoomCode) {
-      onlineBadge.classList.add("hidden");
-      onlineBadge.textContent = "";
-      return;
-    }
-    const roleLabel = onlineRole === "host" ? "HOST" : "GUEST";
-    onlineBadge.textContent = `Online: ${roleLabel} | Room ${onlineRoomCode}`;
-    onlineBadge.classList.remove("hidden");
-  }
-
-  function showOnlineLobby() {
-    startScreen.classList.add("hidden");
-    gameUI.classList.add("hidden");
-    endScreen.classList.add("hidden");
-    onlineLobby.classList.remove("hidden");
-    appendDebug("VocaGrid Online lobby opened.");
-  }
-
-  async function createRoom() {
-    if (!supabaseClient) {
-      createRoomResultEl.textContent = "Failed: Supabase not available.";
-      appendDebug("ERROR: Supabase client is not initialized.");
-      return;
-    }
-    createRoomResultEl.textContent = "Creating room...";
-    appendDebug("Creating room...");
-
-    const code = generateRoomCode(6);
-    const initialState = {
-      phase: "Lobby",
-      createdAt: new Date().toISOString()
-    };
-
-    const { data, error } = await supabaseClient
-      .from("rooms")
-      .insert({ room_code: code, state: initialState })
-      .select()
-      .single();
-
-    if (error) {
-      console.error(error);
-      createRoomResultEl.textContent = "Failed to create room: " + error.message;
-      appendDebug("Create room ERROR: " + error.message);
-      return;
-    }
-
-    createRoomResultEl.textContent = "Room created: " + code;
-    onlineRole = "host";
-    onlineRoomCode = code;
-    updateOnlineBadge();
-    appendDebug("Room created with code " + code);
-  }
-
-  async function joinRoom() {
-    if (!supabaseClient) {
-      createRoomResultEl.textContent = "Failed: Supabase not available.";
-      appendDebug("ERROR: Supabase client is not initialized.");
-      return;
-    }
-    const raw = (joinRoomCodeInput.value || "").trim().toUpperCase();
-    if (!raw) {
-      createRoomResultEl.textContent = "Please enter a room code.";
-      appendDebug("Join room ERROR: empty code.");
-      return;
-    }
-
-    appendDebug("Joining room " + raw + "...");
-    const { data, error } = await supabaseClient
-      .from("rooms")
-      .select("room_code")
-      .eq("room_code", raw)
-      .maybeSingle();
-
-    if (error) {
-      console.error(error);
-      createRoomResultEl.textContent = "Failed to join: " + error.message;
-      appendDebug("Join room ERROR: " + error.message);
-      return;
-    }
-    if (!data) {
-      createRoomResultEl.textContent = "Room not found.";
-      appendDebug("Join room ERROR: room not found.");
-      return;
-    }
-
-    onlineRole = "guest";
-    onlineRoomCode = raw;
-    updateOnlineBadge();
-    createRoomResultEl.textContent = "Joined room: " + raw;
-    appendDebug("Joined room " + raw);
-  }
-
-  // === Online 初期メッセージ ===
-  appendDebug("VocaGrid Online lobby initialized.");
-
-  // === モード / 難易度の UI 設定 ==========================================
-  modeRadios.forEach((input) => {
-    if (input.checked) gameMode = input.value;
-    input.addEventListener("change", () => {
-      gameMode = input.value;
-      // PvC のときだけ難易度を表示
-      difficultyRow.style.display = gameMode === "pvc" ? "flex" : "none";
-    });
-  });
-
-  difficultyRadios.forEach((input) => {
-    if (input.checked) cpuDifficulty = input.value;
-    input.addEventListener("change", () => {
-      cpuDifficulty = input.value;
-    });
-  });
-
-  // === オンラインロビーのイベントリスナー ==============================
-  if (createRoomBtn) createRoomBtn.addEventListener("click", createRoom);
-  if (joinRoomBtn) joinRoomBtn.addEventListener("click", joinRoom);
-  if (backToOfflineBtn) {
-    backToOfflineBtn.addEventListener("click", () => {
-      onlineLobby.classList.add("hidden");
-      startScreen.classList.remove("hidden");
-    });
-  }
-
-  // === Online dictionary helpers ===========================================
+  // --- Online dictionary helpers ---
   async function isInDictionary(word) {
     const key = (word || "").toLowerCase();
     if (!key) return false;
@@ -819,8 +600,7 @@ window.addEventListener("DOMContentLoaded", function () {
   function updateTurnUI() {
     if (!turnIndicatorEl) return;
     const isP1 = currentPlayer === 1;
-    turnIndicatorEl.textContent = isP1 ? "Player 1" : "Player 2";
-    // Change text color directly so it always reflects current player
+    turnIndicatorEl.textContent = isP1 ? "Player 1" : (gameMode === GAME_MODE.PVC ? "Computer" : "Player 2");
     turnIndicatorEl.style.color = isP1 ? "var(--p1)" : "var(--p2)";
     turnIndicatorEl.style.fontWeight = "700";
   }
@@ -831,7 +611,7 @@ window.addEventListener("DOMContentLoaded", function () {
       const li = document.createElement("li");
       li.innerHTML =
         "<strong>" +
-        (entry.player === 1 ? "P1" : "P2") +
+        (entry.player === 1 ? "P1" : (gameMode === GAME_MODE.PVC && entry.player === CPU_PLAYER ? "CPU" : "P2")) +
         ":</strong> " +
         entry.word +
         " (+" +
@@ -895,6 +675,18 @@ window.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  function getSelectedMode() {
+    let selected = GAME_MODE.PVP;
+    if (modeRadios && modeRadios.forEach) {
+      modeRadios.forEach((radio) => {
+        if (radio.checked) {
+          selected = radio.value;
+        }
+      });
+    }
+    return selected;
+  }
+
   function resetGameState() {
     createInitialTiles();
     currentPlayer = 1;
@@ -914,39 +706,32 @@ window.addEventListener("DOMContentLoaded", function () {
     resetLiveStatus();
   }
 
-  function startOfflineGame() {
+  function startGame() {
+    gameMode = getSelectedMode();
     startScreen.classList.add("hidden");
-    onlineLobby.classList.add("hidden");
     endScreen.classList.add("hidden");
     gameUI.classList.remove("hidden");
+
+    // Player2ラベルをモードに応じて変更
+    const p2Label = document.getElementById("i18n_player2Panel");
+    if (p2Label) {
+      p2Label.textContent = (gameMode === GAME_MODE.PVC) ? "Computer" : "Player 2";
+    }
+
     resetGameState();
   }
 
   function backToStart() {
     gameUI.classList.add("hidden");
     endScreen.classList.add("hidden");
-    onlineLobby.classList.add("hidden");
     startScreen.classList.remove("hidden");
-    onlineRole = null;
-    onlineRoomCode = null;
-    updateOnlineBadge();
-  }
-
-  function handleStartClick() {
-    if (gameMode === "online") {
-      showOnlineLobby();
-    } else {
-      // PvP / PvC はオフライン盤面を起動
-      startOfflineGame();
-    }
-  }
-
-  function handleReplayClick() {
-    // リプレイはオフラインゲームのみ対象
-    startOfflineGame();
   }
 
   function handleTileClick(e) {
+    // コンピュータの番は人間はクリックできない
+    if (gameMode === GAME_MODE.PVC && currentPlayer === CPU_PLAYER) {
+      return;
+    }
     const id = e.currentTarget.dataset.id;
     if (!id) return;
     const tile = tiles.find((t) => t.id === id);
@@ -1052,11 +837,15 @@ window.addEventListener("DOMContentLoaded", function () {
     } else {
       currentPlayer = currentPlayer === 1 ? 2 : 1;
       updateTurnUI();
-      // ★ ここで gameMode === "pvc" のとき CPU 手番を呼ぶ予定（次フェーズ）
+
+      // コンピュータ対戦ならコンピュータの手番を自動実行
+      if (gameMode === GAME_MODE.PVC && currentPlayer === CPU_PLAYER) {
+        setTimeout(computerMove, 700);
+      }
     }
   }
 
-  function handlePass() {
+  function handlePass(fromComputer = false) {
     // Record the pass in history
     history.unshift({
       player: currentPlayer,
@@ -1068,7 +857,9 @@ window.addEventListener("DOMContentLoaded", function () {
     renderBoard(boardEl, true);
     updateSelectedUI();
     renderHistory();
-    messageEl.textContent = "Player " + currentPlayer + " passes.";
+    messageEl.textContent = fromComputer
+      ? "Computer passes."
+      : "Player " + currentPlayer + " passes.";
 
     consecutivePasses += 1;
 
@@ -1080,7 +871,10 @@ window.addEventListener("DOMContentLoaded", function () {
 
     currentPlayer = currentPlayer === 1 ? 2 : 1;
     updateTurnUI();
-    // ★ ここでも PvC 時に CPU 手番を呼ぶ予定
+
+    if (!fromComputer && gameMode === GAME_MODE.PVC && currentPlayer === CPU_PLAYER) {
+      setTimeout(computerMove, 700);
+    }
   }
 
   function endGame() {
@@ -1094,7 +888,7 @@ window.addEventListener("DOMContentLoaded", function () {
     if (p1 > p2) {
       resultTextEl.textContent = "Player 1 wins!";
     } else if (p2 > p1) {
-      resultTextEl.textContent = "Player 2 wins!";
+      resultTextEl.textContent = (gameMode === GAME_MODE.PVC ? "Computer wins!" : "Player 2 wins!");
     } else {
       resultTextEl.textContent = "Draw!";
     }
@@ -1109,7 +903,7 @@ window.addEventListener("DOMContentLoaded", function () {
       ", Points: " +
       p1 +
       "<br>" +
-      "<strong>Player 2</strong> – Tiles: " +
+      "<strong>" + (gameMode === GAME_MODE.PVC ? "Computer" : "Player 2") + "</strong> – Tiles: " +
       tiles2 +
       ", Points: " +
       p2 +
@@ -1133,7 +927,9 @@ window.addEventListener("DOMContentLoaded", function () {
         "<strong>Last word used:</strong> " +
         lastEntry.word +
         " (" +
-        (lastEntry.player === 1 ? "Player 1" : "Player 2") +
+        (lastEntry.player === 1
+          ? "Player 1"
+          : (gameMode === GAME_MODE.PVC && lastEntry.player === CPU_PLAYER ? "Computer" : "Player 2")) +
         ")";
 
       const longestP = document.createElement("p");
@@ -1143,12 +939,100 @@ window.addEventListener("DOMContentLoaded", function () {
         " (" +
         longestEntry.word.length +
         " letters, " +
-        (longestEntry.player === 1 ? "Player 1" : "Player 2") +
+        (longestEntry.player === 1
+          ? "Player 1"
+          : (gameMode === GAME_MODE.PVC && longestEntry.player === CPU_PLAYER ? "Computer" : "Player 2")) +
         ")";
 
       gameStatsEl.appendChild(lastP);
       gameStatsEl.appendChild(longestP);
     }
+  }
+
+  // コンピュータの一手（簡易版）
+  function computerMove() {
+    if (gameMode !== GAME_MODE.PVC || currentPlayer !== CPU_PLAYER) {
+      return;
+    }
+
+    const available = tiles.filter((t) => t.owner === null || t.owner === CPU_PLAYER);
+    if (available.length < 2) {
+      handlePass(true);
+      return;
+    }
+
+    const letterMap = {};
+    available.forEach((t) => {
+      if (!letterMap[t.letter]) {
+        letterMap[t.letter] = [];
+      }
+      letterMap[t.letter].push(t);
+    });
+
+    let chosenWord = null;
+    let chosenTiles = null;
+
+    outer: for (const w of CPU_WORDS) {
+      const letters = w.toUpperCase().split("");
+      const usedIds = new Set();
+      const wordTiles = [];
+
+      for (const ch of letters) {
+        const candidates = (letterMap[ch] || []).filter((tile) => !usedIds.has(tile.id));
+        if (candidates.length === 0) {
+          continue outer;
+        }
+        let tile = candidates.find((tile) => tile.owner === null) || candidates[0];
+        usedIds.add(tile.id);
+        wordTiles.push(tile);
+      }
+
+      chosenWord = w.toUpperCase();
+      chosenTiles = wordTiles;
+      break;
+    }
+
+    if (!chosenWord || !chosenTiles) {
+      handlePass(true);
+      return;
+    }
+
+    let gain = 0;
+    chosenTiles.forEach((tile) => {
+      if (tile.owner === null) {
+        gain++;
+        points[CPU_PLAYER]++;
+      }
+      tile.owner = CPU_PLAYER;
+    });
+
+    history.unshift({
+      player: CPU_PLAYER,
+      word: chosenWord,
+      gain: gain
+    });
+
+    usedWords.add(chosenWord.toLowerCase());
+    consecutivePasses = 0;
+
+    updateMeaningBoxForPlayer(CPU_PLAYER, chosenWord);
+
+    selectedIds = [];
+    recalcLocks();
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    updateScoresUI();
+    renderHistory();
+    messageEl.textContent = "Computer plays: " + chosenWord;
+
+    const allOwned = tiles.every((t) => t.owner !== null);
+    if (allOwned) {
+      endGame();
+      return;
+    }
+
+    currentPlayer = 1;
+    updateTurnUI();
   }
 
   // Selected area drag & drop + tap handlers (event delegation)
@@ -1212,14 +1096,14 @@ window.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Event listeners（スタートまわりを新しいハンドラに変更）
-  startBtn.addEventListener("click", handleStartClick);
+  // Event listeners
+  startBtn.addEventListener("click", startGame);
   backToStartBtn.addEventListener("click", backToStart);
-  replayBtn.addEventListener("click", handleReplayClick);
+  replayBtn.addEventListener("click", startGame);
   submitBtn.addEventListener("click", submitWord);
   undoBtn.addEventListener("click", undoSelection);
   clearBtn.addEventListener("click", clearSelection);
-  passBtn.addEventListener("click", handlePass);
+  passBtn.addEventListener("click", () => handlePass(false));
 });
   </script>
 </body>
