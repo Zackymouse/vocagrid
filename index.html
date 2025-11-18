@@ -54,10 +54,14 @@
       </label>
     </div>
 
-    <div class="start-buttons">
-  <button id="startBtn" class="btn primary">Start</button>
-  <button id="onlineBtn" class="btn secondary" type="button">Online</button>
-</div>
+    <button id="onlineBtn" class="btn ghost">Online</button>
+    <button id="startBtn" class="btn primary">Start</button>
+  </div>
+
+  <div id="onlineScreen" class="screen online hidden">
+    <h1>VOCAGRID Online (beta)</h1>
+    <p>Online mode is under development.</p>
+    <button id="onlineBackBtn" class="btn ghost">Back to Start</button>
   </div>
 
   <!-- Game Screen -->
@@ -267,6 +271,8 @@ window.addEventListener("DOMContentLoaded", function () {
   const wordHistoryEl = document.getElementById("wordHistory");
   const cpuPersonalityLabelEl = document.getElementById("cpuPersonalityLabel");
   const cpuMoveLabelEl = document.getElementById("cpuMoveLabel");
+  const player1LabelEl = document.getElementById("i18n_player1Panel");
+  const player2LabelEl = document.getElementById("i18n_player2Panel");
   const score1El = document.getElementById("score1");
   const score2El = document.getElementById("score2");
   const points1El = document.getElementById("points1");
@@ -289,6 +295,20 @@ window.addEventListener("DOMContentLoaded", function () {
   }
 
   if (modeRadios && modeRadios.length) {
+
+  function updatePlayerLabels() {
+    if (!player1LabelEl || !player2LabelEl) return;
+    // In PvP mode, keep Player 1 / Player 2.
+    if (gameMode === MODE_PVP) {
+      player1LabelEl.textContent = "Player 1";
+      player2LabelEl.textContent = "Player 2";
+    } else {
+      // In CPU modes, show Player / CPU for clarity.
+      player1LabelEl.textContent = "Player";
+      player2LabelEl.textContent = "CPU";
+    }
+  }
+
     modeRadios.forEach((r) => {
       r.addEventListener("change", updateDifficultyVisibility);
     });
@@ -307,7 +327,10 @@ window.addEventListener("DOMContentLoaded", function () {
   const undoBtn = document.getElementById("undoBtn");
   const clearBtn = document.getElementById("clearBtn");
   const replayBtn = document.getElementById("replayBtn");
-  const passBtn = document.getElementById("passBtn");
+  const passBtn = document.getElementById("passBtn")
+  const onlineBtn = document.getElementById("onlineBtn");
+  const onlineScreen = document.getElementById("onlineScreen");
+  const onlineBackBtn = document.getElementById("onlineBackBtn");;
 
   const meaningWord1El = document.getElementById("meaningWord1");
   const meaningPos1El = document.getElementById("meaningPos1");
@@ -790,7 +813,12 @@ function resetGameState() {
             if (difficultyRadios && difficultyRadios.length) {
               difficultyRadios.forEach((d) => {
                 if (d.checked) diff = d.value;
-              });
+            
+    // Update player name labels based on current mode (PvP vs CPU).
+    if (typeof updatePlayerLabels === "function") {
+      updatePlayerLabels();
+    }
+  });
             }
             if (diff === "normal") {
               gameMode = MODE_CPU_NORMAL;
@@ -828,6 +856,23 @@ function resetGameState() {
     endScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
   }
+  function showOnlineScreen() {
+    if (onlineScreen) {
+      onlineScreen.classList.remove("hidden");
+    }
+    startScreen.classList.add("hidden");
+    gameUI.classList.add("hidden");
+    endScreen.classList.add("hidden");
+  }
+
+  function closeOnlineScreen() {
+    if (onlineScreen) {
+      onlineScreen.classList.add("hidden");
+    }
+    endScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+  }
+
 
   function handleTileClick(e) {
     const id = e.currentTarget.dataset.id;
@@ -1798,21 +1843,14 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
   undoBtn.addEventListener("click", undoSelection);
   clearBtn.addEventListener("click", clearSelection);
   passBtn.addEventListener("click", handlePass);
+  if (onlineBtn) {
+    onlineBtn.addEventListener("click", showOnlineScreen);
+  }
+  if (onlineBackBtn) {
+    onlineBackBtn.addEventListener("click", closeOnlineScreen);
+  }
 });
 
   </script>
-
-  <script>
-    // Simple Online button handler (keeps existing PvP / CPU logic untouched)
-    document.addEventListener("DOMContentLoaded", function () {
-      const onlineBtn = document.getElementById("onlineBtn");
-      if (onlineBtn) {
-        onlineBtn.addEventListener("click", function () {
-          window.location.href = "online.html";
-        });
-      }
-    });
-  </script>
 </body>
-
 </html>
