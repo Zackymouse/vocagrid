@@ -879,105 +879,43 @@ h1 {
 }
 
 /* Mobile responsiveness */
-/* === Responsive layout for smartphones (max 768px) === */
 @media (max-width: 768px) {
-
-  /* 画面からはみ出さないためのベース指定 */
-  html, body {
-    margin: 0;
-    padding: 0;
-    max-width: 100%;
-    overflow-x: hidden;
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .game-container {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 8px 12px;
-    box-sizing: border-box;
-    gap: 8px;
-  }
-
+  /* Stack layout vertically on mobile */
   .game-layout {
     flex-direction: column;
     align-items: center;
+  }
+
+  .info-section {
+    flex: 1 1 auto;
     width: 100%;
-  }
-
-  .board-wrapper {
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-  }
-
-  .board {
-    gap: 4px;
-  }
-
-  .tile {
-    width: 38px;
-    height: 38px;
-    font-size: 18px;
-  }
-
-  .selected-letters {
-    margin-top: 8px;
-    font-size: 16px;
-  }
-
-  .side-panel {
-    width: 100%;
-    max-width: 420px;
-    margin-top: 8px;
+    max-width: 400px;
   }
 
   .panel {
-    padding: 10px 12px;
-  }
-
-  .scores-row {
-    flex-direction: column;
-    gap: 6px;
-    align-items: flex-start;
-  }
-
-  .controls-row {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .controls-row .btn,
-  .start-actions .btn {
     width: 100%;
-    justify-content: center;
   }
 
-  .alphabet-row {
-    flex-wrap: wrap;
-    gap: 4px;
+  h1 {
+    font-size: 24px;
   }
+}
 
-  .alphabet-btn {
-    min-width: 30px;
-    padding: 6px 4px;
-    font-size: 14px;
-  }
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  z-index: 100;
+}
 
-  .start-screen-card {
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    padding: 16px 14px;
-  }
-
-  .mode-select,
-  .difficulty-select {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-}/* Added word suggestions styling for predictive text feature */
+/* Added word suggestions styling for predictive text feature */
 .word-suggestions {
   display: flex;
   gap: 8px;
@@ -1117,161 +1055,19 @@ h1 {
 }
 
 
-/* CPU info panel */
-.panel.cpu-info h3 {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  font-weight: 800;
-  text-align: center;
-  padding-bottom: 6px;
-  border-bottom: 2px solid #e5e7f2;
+/* Layout for start & online buttons: keep Start left, Online right */
+.screen.start #startBtn {
+  float: left;
 }
 
-.cpu-info .cpu-personality-row,
-.cpu-info .cpu-move-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-  font-size: 13px;
+.screen.start #onlineBtn {
+  float: right;
+  margin-top: 20px;
 }
 
-.cpu-info .label {
-  font-weight: 600;
-  color: #555;
-}
-
-#cpuPersonalityLabel,
-#cpuMoveLabel {
-  font-weight: 700;
-  color: #111827;
-  text-align: right;
-}
-
-/* Tile flash effects for CPU attack/gain */
-.tile-attack-flash {
-  animation: tileAttackFlash 0.5s ease-out;
-}
-
-.tile-gain-flash {
-  animation: tileGainFlash 0.5s ease-out;
-}
-
-@keyframes tileAttackFlash {
-  0% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.9);
-    transform: scale(1.03);
-  }
-  100% {
-    box-shadow: 0 0 0 14px rgba(220, 38, 38, 0);
-    transform: scale(1);
-  }
-}
-
-@keyframes tileGainFlash {
-  0% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.9);
-    transform: scale(1.03);
-  }
-  100% {
-    box-shadow: 0 0 0 14px rgba(34, 197, 94, 0);
-    transform: scale(1);
-  }
-}
-/* === Responsive tweaks for small screens (smartphones) === */
-@media (max-width: 768px) {
-  .game-container {
-    padding: 8px;
-    gap: 8px;
-  }
-
-  .game-layout {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .board-wrapper {
-    width: 100%;
-    max-width: 420px;
-  }
-
-  .board {
-    gap: 4px;
-  }
-
-  .tile {
-    width: 38px;
-    height: 38px;
-    font-size: 18px;
-  }
-
-  .selected-letters {
-    margin-top: 8px;
-    font-size: 16px;
-  }
-
-  .side-panel {
-    width: 100%;
-    max-width: 420px;
-    margin-top: 8px;
-  }
-
-  .panel {
-    padding: 10px 12px;
-  }
-
-  .scores-row {
-    flex-direction: column;
-    gap: 6px;
-    align-items: flex-start;
-  }
-
-  .panel-player1 .name,
-  .panel-player2 .name {
-    font-size: 14px;
-  }
-
-  .panel-player1 .score,
-  .panel-player2 .score {
-    font-size: 18px;
-  }
-
-  .controls-row {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .controls-row .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .alphabet-row {
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .alphabet-btn {
-    min-width: 30px;
-    padding: 6px 4px;
-    font-size: 14px;
-  }
-
-  .mode-select,
-  .difficulty-select {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .start-screen-card {
-    width: 100%;
-    max-width: 420px;
-    padding: 16px 14px;
-  }
-
-  .start-actions .btn {
-    width: 100%;
-    justify-content: center;
-  }
+/* Clear floats in start screen to keep layout stable */
+.screen.start::after {
+  content: "";
+  display: block;
+  clear: both;
 }
