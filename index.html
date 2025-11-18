@@ -273,6 +273,8 @@ window.addEventListener("DOMContentLoaded", function () {
   const cpuMoveLabelEl = document.getElementById("cpuMoveLabel");
   const player1LabelEl = document.getElementById("i18n_player1Panel");
   const player2LabelEl = document.getElementById("i18n_player2Panel");
+  const meaningP1TitleEl = document.querySelector("#meaningP1 h4");
+  const meaningP2TitleEl = document.querySelector("#meaningP2 h4");
   const cpuInfoPanel = document.querySelector(".panel.cpu-info");
   const score1El = document.getElementById("score1");
   const score2El = document.getElementById("score2");
@@ -671,12 +673,11 @@ window.addEventListener("DOMContentLoaded", function () {
     remainingCountEl.textContent = String(remaining);
   }
 
-  function updateTurnUI() {
 
+  function updateTurnUI() {
     if (!turnIndicatorEl) return;
     const isP1 = currentPlayer === 1;
     const cpu = isCpuMode();
-
     if (cpu) {
       turnIndicatorEl.textContent = isP1 ? "Player" : "CPU";
     } else {
@@ -685,6 +686,7 @@ window.addEventListener("DOMContentLoaded", function () {
     turnIndicatorEl.style.color = isP1 ? "var(--p1)" : "var(--p2)";
     turnIndicatorEl.style.fontWeight = "700";
   }
+
 
   function renderHistory() {
     wordHistoryEl.innerHTML = "";
@@ -767,19 +769,25 @@ window.addEventListener("DOMContentLoaded", function () {
   }
 
   function updateLayoutForMode() {
-    if (!player1LabelEl || !player2LabelEl || !cpuInfoPanel) return;
-    if (isCpuMode()) {
-      // CPU modes: show CPU info, label as Player / CPU
-      cpuInfoPanel.style.display = "";
-      player1LabelEl.textContent = "Player";
-      player2LabelEl.textContent = "CPU";
-    } else {
-      // PvP: hide CPU info and label as Player 1 / Player 2
-      cpuInfoPanel.style.display = "none";
-      player1LabelEl.textContent = "Player 1";
-      player2LabelEl.textContent = "Player 2";
+    const cpu = isCpuMode();
+
+    if (cpuInfoPanel) {
+      cpuInfoPanel.style.display = cpu ? "" : "none";
+    }
+    if (player1LabelEl) {
+      player1LabelEl.textContent = cpu ? "Player" : "Player 1";
+    }
+    if (player2LabelEl) {
+      player2LabelEl.textContent = cpu ? "CPU" : "Player 2";
+    }
+    if (meaningP1TitleEl) {
+      meaningP1TitleEl.textContent = cpu ? "Player last word" : "Player 1 last word";
+    }
+    if (meaningP2TitleEl) {
+      meaningP2TitleEl.textContent = cpu ? "CPU last word" : "Player 2 last word";
     }
   }
+
 
   function isCpuTurn() {
     return isCpuMode() && currentPlayer === CPU_PLAYER;
@@ -861,16 +869,10 @@ function resetGameState() {
     gameUI.classList.add("hidden");
     endScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
-    // Ensure CPU difficulty row visibility matches current mode when returning
-    if (typeof updateDifficultyVisibility === "function") {
-          if (typeof updateLayoutForMode === "function") {
-      updateLayoutForMode();
-    }
-updateDifficultyVisibility();
-    }
+
   }
   function showOnlineScreen() {
-    // Redirect to the dedicated online menu page
+    // Redirect to dedicated online menu
     window.location.href = "online.html";
   }
 
