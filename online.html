@@ -1,361 +1,72 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>VocaGrid Online</title>
+  <meta charset="UTF-8" />
+  <title>VOCAGRID Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="globals.css" />
   <link rel="stylesheet" href="game.css" />
-  <style>
-    body {
-      background: #050816;
-      color: #f4f4f5;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .online-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      box-sizing: border-box;
-    }
-    .online-card {
-      width: 100%;
-      max-width: 420px;
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 16px;
-      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.75);
-      padding: 20px 18px;
-      box-sizing: border-box;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-    }
-    .online-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .online-subtitle {
-      font-size: 13px;
-      opacity: 0.85;
-      margin-bottom: 16px;
-    }
-    .online-section-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-top: 12px;
-      margin-bottom: 6px;
-    }
-    .online-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .online-input {
-      flex: 1;
-      min-width: 0;
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      background: rgba(15, 23, 42, 0.9);
-      color: #e5e7eb;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-    .online-input::placeholder {
-      color: rgba(148, 163, 184, 0.8);
-    }
-    .online-btn {
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      white-space: nowrap;
-      background: linear-gradient(135deg, #22c55e, #22d3ee);
-      color: #020617;
-      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.08s ease;
-      box-shadow: 0 10px 25px rgba(45, 212, 191, 0.35);
-    }
-    .online-btn.secondary {
-      background: rgba(30, 64, 175, 0.9);
-      color: #e5e7eb;
-      box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4);
-    }
-    .online-btn:active {
-      transform: translateY(1px) scale(0.985);
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.8);
-      opacity: 0.95;
-    }
-    .online-status {
-      font-size: 13px;
-      line-height: 1.5;
-      margin-top: 8px;
-      min-height: 32px;
-      color: #e5e7eb;
-    }
-    .online-status strong {
-      color: #22c55e;
-    }
-    .online-code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      letter-spacing: 0.18em;
-      font-size: 18px;
-      padding: 6px 0;
-    }
-    .online-debug {
-      font-size: 11px;
-      margin-top: 8px;
-      max-height: 90px;
-      overflow: auto;
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 8px;
-      padding: 6px 8px;
-      border: 1px dashed rgba(148, 163, 184, 0.4);
-      color: #9ca3af;
-      white-space: pre-wrap;
-    }
-    .online-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      margin-top: 10px;
-      color: #a5b4fc;
-      text-decoration: none;
-    }
-    .online-link:hover {
-      text-decoration: underline;
-    }
-  </style>
 </head>
-<body>
-  <div class="online-container">
-    <div class="online-card">
-      <div class="online-title">VocaGrid Online</div>
-      <div class="online-subtitle">
-        プロトタイプ版オンラインロビーです。<br />
-        まずは <strong>プライベートルームの作成 / 参加</strong> だけ動かします。
-      </div>
+<body class="online-lobby-body">
+  <div class="screen start online-lobby">
+    <h1>VOCAGRID Online</h1>
+    <p>
+      Choose how you want to battle online. Private matches are for playing
+      remotely with friends. Public matches will match you with random players
+      in the future.
+    </p>
 
-      <div class="online-section-title">1. プライベートルームを作成</div>
-      <div class="online-row">
-        <button id="btn-create-room" class="online-btn">
-          Create Room
-        </button>
-      </div>
-      <div id="create-room-result" class="online-status"></div>
+    <div class="online-mode-grid">
+      <section class="online-mode-card">
+        <h2>Private Match</h2>
+        <p>
+          Create or join a private room and share a room code with your friends.
+          This is the main focus of the current online mode.
+        </p>
+        <button id="playPrivate" class="btn primary">Play Private Match</button>
+      </section>
 
-      <div class="online-section-title">2. ルームに参加</div>
-      <div class="online-row">
-        <input
-          id="join-room-code"
-          class="online-input"
-          placeholder="Room code (例: AB3FQK)"
-        />
-        <button id="btn-join-room" class="online-btn secondary">
-          Join Room
-        </button>
-      </div>
-      <div id="join-room-result" class="online-status"></div>
+      <section class="online-mode-card online-mode-disabled">
+        <h2>Public Match</h2>
+        <p>
+          Get matched with random players around the world. This mode is
+          under development and not available yet.
+        </p>
+        <button id="playPublic" class="btn ghost" disabled>Coming Soon</button>
+      </section>
+    </div>
 
-      <div class="online-section-title">Debug</div>
-      <div id="online-debug" class="online-debug"></div>
-
-      <a href="./" class="online-link">
-        ← Back to offline VocaGrid
-      </a>
+    <div class="online-actions">
+      <button id="backToTitle" class="btn ghost">Back to Title</button>
     </div>
   </div>
 
-  <!-- Supabase JS クライアント -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // ==== Supabase client init ====
-    const { createClient } = supabase;
+    document.addEventListener("DOMContentLoaded", function () {
+      const playPrivate = document.getElementById("playPrivate");
+      const playPublic = document.getElementById("playPublic");
+      const backToTitle = document.getElementById("backToTitle");
 
-    const SUPABASE_URL = "https://asilqsvfeedeirxadnjb.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzaWxxc3ZmZWVkZWlyeGFkbmpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzkyMzgsImV4cCI6MjA3ODgxNTIzOH0.wZByhkNnaDBZ0tvmLWVHcpWCSgG6fBkPAVktZTBQtpo";
-
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // ==== Utility: UI helpers ====
-    function setText(id, html) {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = html;
-    }
-
-    function appendDebug(msg) {
-      const el = document.getElementById("online-debug");
-      if (!el) return;
-      const now = new Date().toLocaleTimeString();
-      el.textContent = `[${now}] ${msg}\n` + el.textContent;
-    }
-
-    function generateRoomCode(length = 6) {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let result = "";
-      for (let i = 0; i < length; i++) {
-        result += chars[Math.floor(Math.random() * chars.length)];
-      }
-      return result;
-    }
-
-    function generateToken(length = 32) {
-      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let result = "";
-      for (let i = 0; i < length; i++) {
-        result += chars[Math.floor(Math.random() * chars.length)];
-      }
-      return result;
-    }
-
-        async function createRoom() {
-      setText("create-room-result", "Creating room...");
-      appendDebug("Creating room...");
-
-      const roomCode = generateRoomCode();
-      const hostToken = generateToken();
-
-      const initialState = {
-        phase: "lobby",
-        createdAt: new Date().toISOString()
-      };
-
-      const { data, error } = await supabaseClient
-        .from("rooms")
-        .insert({
-          room_code: roomCode,
-          state: initialState,
-          status: "waiting",
-          host_token: hostToken,
-          current_turn: "host"
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error(error);
-        setText(
-          "create-room-result",
-          `<span style="color:#f97373;">Failed to create room: ${error.message}</span>`
-        );
-        appendDebug("Create room ERROR: " + error.message);
-        return;
-      }
-
-      setText(
-        "create-room-result",
-        `Room created! Share this code with your friend:<br/><span class="online-code">${data.room_code}</span>`
-      );
-      appendDebug(`Room created with code=${data.room_code}`);
-
-      // ★ ここからオンラインゲーム画面へ遷移する準備 ★
-      localStorage.setItem("vg_room_code", data.room_code);
-      localStorage.setItem("vg_role", "host");
-      localStorage.setItem("vg_player_token", hostToken);
-
-      // オンライン用ゲーム画面へ
-      window.location.href = "online-game.html";
-    }
-    
-        async function joinRoom() {
-      const input = document.getElementById("join-room-code");
-      const codeRaw = (input?.value || "").trim().toUpperCase();
-      if (!codeRaw) {
-        setText("join-room-result", "Please enter a room code.");
-        return;
-      }
-      setText("join-room-result", "Joining room...");
-      appendDebug("Joining room with code=" + codeRaw);
-
-      const { data, error } = await supabaseClient
-        .from("rooms")
-        .select("*")
-        .eq("room_code", codeRaw)
-        .single();
-
-      if (error || !data) {
-        setText(
-          "join-room-result",
-          `<span style="color:#f97373;">Room not found or error.</span>`
-        );
-        appendDebug("Join room ERROR: " + (error ? error.message : "not found"));
-        return;
-      }
-
-      if (data.status !== "waiting") {
-        setText(
-          "join-room-result",
-          `<span style="color:#f97373;">Room is not waiting (status: ${data.status}).</span>`
-        );
-        appendDebug("Join room failed: status=" + data.status);
-        return;
-      }
-
-      const guestToken = generateToken();
-
-      const { data: updated, error: updateError } = await supabaseClient
-        .from("rooms")
-        .update({
-          guest_token: guestToken,
-          status: "playing"
-        })
-        .eq("id", data.id)
-        .select()
-        .single();
-
-      if (updateError || !updated) {
-        setText(
-          "join-room-result",
-          `<span style="color:#f97373;">Failed to join room.</span>`
-        );
-        appendDebug(
-          "Join room UPDATE ERROR: " + (updateError ? updateError.message : "unknown")
-        );
-        return;
-      }
-
-      setText(
-        "join-room-result",
-        `Joined room! You are the guest of:<br/><span class="online-code">${updated.room_code}</span>`
-      );
-      appendDebug("Joined room successfully: id=" + updated.id);
-
-      // ★ 自分は guest としてオンラインゲーム画面へ ★
-      localStorage.setItem("vg_room_code", updated.room_code);
-      localStorage.setItem("vg_role", "guest");
-      localStorage.setItem("vg_player_token", guestToken);
-
-      window.location.href = "online-game.html";
-    }
-    document.addEventListener("DOMContentLoaded", () => {
-      const btnCreate = document.getElementById("btn-create-room");
-      const btnJoin = document.getElementById("btn-join-room");
-
-      btnCreate?.addEventListener("click", () => {
-        createRoom().catch((e) => {
-          console.error(e);
-          appendDebug("Create room EXCEPTION: " + e.message);
+      if (playPrivate) {
+        playPrivate.addEventListener("click", function () {
+          // For now, private match simply opens the online battle screen.
+          window.location.href = "online-game.html";
         });
-      });
+      }
 
-      btnJoin?.addEventListener("click", () => {
-        joinRoom().catch((e) => {
-          console.error(e);
-          appendDebug("Join room EXCEPTION: " + e.message);
+      if (playPublic) {
+        playPublic.addEventListener("click", function () {
+          // Public match is not implemented yet.
+          alert("Public Match is under development.");
         });
-      });
+      }
 
-      appendDebug("VocaGrid Online lobby initialized.");
+      if (backToTitle) {
+        backToTitle.addEventListener("click", function () {
+          // Go back to the main title screen.
+          window.location.href = "index (1).html";
+        });
+      }
     });
   </script>
 </body>
