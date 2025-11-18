@@ -306,7 +306,6 @@ window.addEventListener("DOMContentLoaded", function () {
   const gameStatsEl = document.getElementById("gameStats");
 
   const startBtn = document.getElementById("startBtn");
-  const onlineBtn = document.getElementById("onlineBtn");
   const backToStartBtn = document.getElementById("backToStartBtn");
   const submitBtn = document.getElementById("submitBtn");
   const undoBtn = document.getElementById("undoBtn");
@@ -798,7 +797,12 @@ function resetGameState() {
             if (difficultyRadios && difficultyRadios.length) {
               difficultyRadios.forEach((d) => {
                 if (d.checked) diff = d.value;
-              });
+            
+    // Keep difficulty row visibility in sync after starting a game
+    if (typeof updateDifficultyVisibility === "function") {
+      updateDifficultyVisibility();
+    }
+  });
             }
             if (diff === "normal") {
               gameMode = MODE_CPU_NORMAL;
@@ -835,6 +839,10 @@ function resetGameState() {
     gameUI.classList.add("hidden");
     endScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
+    // Ensure CPU difficulty row visibility matches current mode when returning
+    if (typeof updateDifficultyVisibility === "function") {
+      updateDifficultyVisibility();
+    }
   }
   function showOnlineScreen() {
     if (onlineScreen) {
@@ -1817,11 +1825,6 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
 
 // Event listeners
   startBtn.addEventListener("click", startGame);
-  if (onlineBtn) {
-    onlineBtn.addEventListener("click", function () {
-      window.location.href = "online.html";
-    });
-  }
   backToStartBtn.addEventListener("click", backToStart);
   replayBtn.addEventListener("click", startGame);
   submitBtn.addEventListener("click", submitWord);
