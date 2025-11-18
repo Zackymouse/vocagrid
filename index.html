@@ -54,14 +54,10 @@
       </label>
     </div>
 
-    <button id="onlineBtn" class="btn ghost">Online</button>
-    <button id="startBtn" class="btn primary">Start</button>
-  </div>
-
-  <div id="onlineScreen" class="screen online hidden">
-    <h1>VOCAGRID Online (beta)</h1>
-    <p>Online mode is under development.</p>
-    <button id="onlineBackBtn" class="btn ghost">Back to Start</button>
+    <div class="start-buttons">
+  <button id="startBtn" class="btn primary">Start</button>
+  <button id="onlineBtn" class="btn secondary" type="button">Online</button>
+</div>
   </div>
 
   <!-- Game Screen -->
@@ -311,10 +307,7 @@ window.addEventListener("DOMContentLoaded", function () {
   const undoBtn = document.getElementById("undoBtn");
   const clearBtn = document.getElementById("clearBtn");
   const replayBtn = document.getElementById("replayBtn");
-  const passBtn = document.getElementById("passBtn")
-  const onlineBtn = document.getElementById("onlineBtn");
-  const onlineScreen = document.getElementById("onlineScreen");
-  const onlineBackBtn = document.getElementById("onlineBackBtn");;
+  const passBtn = document.getElementById("passBtn");
 
   const meaningWord1El = document.getElementById("meaningWord1");
   const meaningPos1El = document.getElementById("meaningPos1");
@@ -834,25 +827,7 @@ function resetGameState() {
     gameUI.classList.add("hidden");
     endScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
-    // Ensure CPU difficulty row visibility matches current mode when returning
-    if (typeof updateDifficultyVisibility === "function") {
-      updateDifficultyVisibility();
-    }
   }
-  function showOnlineScreen() {
-    // Online menu is handled in online.html now.
-    // Redirect there instead of using a local beta screen.
-    window.location.href = "online.html";
-  }
-
-  function closeOnlineScreen() {
-    if (onlineScreen) {
-      onlineScreen.classList.add("hidden");
-    }
-    endScreen.classList.add("hidden");
-    startScreen.classList.remove("hidden");
-  }
-
 
   function handleTileClick(e) {
     const id = e.currentTarget.dataset.id;
@@ -1823,14 +1798,21 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
   undoBtn.addEventListener("click", undoSelection);
   clearBtn.addEventListener("click", clearSelection);
   passBtn.addEventListener("click", handlePass);
-  if (onlineBtn) {
-    onlineBtn.addEventListener("click", showOnlineScreen);
-  }
-  if (onlineBackBtn) {
-    onlineBackBtn.addEventListener("click", closeOnlineScreen);
-  }
 });
 
   </script>
+
+  <script>
+    // Simple Online button handler (keeps existing PvP / CPU logic untouched)
+    document.addEventListener("DOMContentLoaded", function () {
+      const onlineBtn = document.getElementById("onlineBtn");
+      if (onlineBtn) {
+        onlineBtn.addEventListener("click", function () {
+          window.location.href = "online.html";
+        });
+      }
+    });
+  </script>
 </body>
+
 </html>
