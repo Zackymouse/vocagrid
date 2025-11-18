@@ -170,7 +170,7 @@
       <div class="online-section-title">Debug</div>
       <div id="online-debug" class="online-debug"></div>
 
-      <a href="index (1).html" class="online-link">
+      <a href="#" class="online-link" id="backOfflineLink">
         ← Back to offline VocaGrid
       </a>
     </div>
@@ -358,5 +358,22 @@
       appendDebug("VocaGrid Online lobby initialized.");
     });
   </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const backLink = document.getElementById("backOfflineLink");
+      if (backLink) {
+        backLink.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            window.location.href = "index.html";
+          }
+        });
+      }
+    });
+  </script>
 </body>
+
 </html>
