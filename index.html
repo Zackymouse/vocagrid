@@ -797,12 +797,7 @@ function resetGameState() {
             if (difficultyRadios && difficultyRadios.length) {
               difficultyRadios.forEach((d) => {
                 if (d.checked) diff = d.value;
-            
-    // Keep difficulty row visibility in sync after starting a game
-    if (typeof updateDifficultyVisibility === "function") {
-      updateDifficultyVisibility();
-    }
-  });
+              });
             }
             if (diff === "normal") {
               gameMode = MODE_CPU_NORMAL;
@@ -839,15 +834,12 @@ function resetGameState() {
     gameUI.classList.add("hidden");
     endScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
-    // Ensure CPU difficulty row visibility matches current mode when returning
-    if (typeof updateDifficultyVisibility === "function") {
-      updateDifficultyVisibility();
-    }
   }
   function showOnlineScreen() {
-    if (onlineScreen) {
-      onlineScreen.classList.remove("hidden");
-    }
+    // Online screen is handled in online.html now.
+    // Simply redirect there instead of toggling a local screen.
+    window.location.href = "online.html";
+  }
     startScreen.classList.add("hidden");
     gameUI.classList.add("hidden");
     endScreen.classList.add("hidden");
