@@ -306,6 +306,7 @@ window.addEventListener("DOMContentLoaded", function () {
   const gameStatsEl = document.getElementById("gameStats");
 
   const startBtn = document.getElementById("startBtn");
+  const onlineBtn = document.getElementById("onlineBtn");
   const backToStartBtn = document.getElementById("backToStartBtn");
   const submitBtn = document.getElementById("submitBtn");
   const undoBtn = document.getElementById("undoBtn");
@@ -1816,6 +1817,11 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
 
 // Event listeners
   startBtn.addEventListener("click", startGame);
+  if (onlineBtn) {
+    onlineBtn.addEventListener("click", function () {
+      window.location.href = "online.html";
+    });
+  }
   backToStartBtn.addEventListener("click", backToStart);
   replayBtn.addEventListener("click", startGame);
   submitBtn.addEventListener("click", submitWord);
