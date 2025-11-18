@@ -23,7 +23,7 @@
       </ul>
     </div>
 
-    <div class="mode-select hidden">
+    <div class="mode-select">
       <label>
         <input type="radio" name="mode" value="pvp" checked />
         Player vs Player
@@ -31,6 +31,26 @@
       <label>
         <input type="radio" name="mode" value="cpu" />
         Player vs Computer
+      </label>
+    </div>
+
+    <div class="mode-select" id="difficultyRow" style="display: none;">
+      <span>Difficulty:</span>
+      <label>
+        <input type="radio" name="difficulty" value="easy" checked />
+        Easy
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="normal" />
+        Normal
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="hard" />
+        Hard
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="ultimate" />
+        Ultimate
       </label>
     </div>
 
@@ -1835,6 +1855,20 @@ window.addEventListener("DOMContentLoaded", function () {
   undoBtn.addEventListener("click", undoSelection);
   clearBtn.addEventListener("click", clearSelection);
   passBtn.addEventListener("click", handlePass);
+
+  // Auto-start when launched from the online lobby
+  (function autoStartIfOnline() {
+    try {
+      const roomCode = localStorage.getItem("vg_room_code");
+      const role = localStorage.getItem("vg_role");
+      const token = localStorage.getItem("vg_player_token");
+      if (roomCode && role && token) {
+        startGame();
+      }
+    } catch (e) {
+      console.warn("autoStartIfOnline error", e);
+    }
+  })();
 });
   </script>
 
