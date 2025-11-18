@@ -834,15 +834,15 @@ function resetGameState() {
     gameUI.classList.add("hidden");
     endScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
+    // Ensure CPU difficulty row visibility matches current mode when returning
+    if (typeof updateDifficultyVisibility === "function") {
+      updateDifficultyVisibility();
+    }
   }
   function showOnlineScreen() {
-    // Online screen is handled in online.html now.
-    // Simply redirect there instead of toggling a local screen.
+    // Online menu is handled in online.html now.
+    // Redirect there instead of using a local beta screen.
     window.location.href = "online.html";
-  }
-    startScreen.classList.add("hidden");
-    gameUI.classList.add("hidden");
-    endScreen.classList.add("hidden");
   }
 
   function closeOnlineScreen() {
