@@ -273,6 +273,7 @@ window.addEventListener("DOMContentLoaded", function () {
   const cpuMoveLabelEl = document.getElementById("cpuMoveLabel");
   const player1LabelEl = document.getElementById("i18n_player1Panel");
   const player2LabelEl = document.getElementById("i18n_player2Panel");
+  const cpuInfoPanel = document.querySelector(".panel.cpu-info");
   const score1El = document.getElementById("score1");
   const score2El = document.getElementById("score2");
   const points1El = document.getElementById("points1");
@@ -295,20 +296,6 @@ window.addEventListener("DOMContentLoaded", function () {
   }
 
   if (modeRadios && modeRadios.length) {
-
-  function updatePlayerLabels() {
-    if (!player1LabelEl || !player2LabelEl) return;
-    // In PvP mode, keep Player 1 / Player 2.
-    if (gameMode === MODE_PVP) {
-      player1LabelEl.textContent = "Player 1";
-      player2LabelEl.textContent = "Player 2";
-    } else {
-      // In CPU modes, show Player / CPU for clarity.
-      player1LabelEl.textContent = "Player";
-      player2LabelEl.textContent = "CPU";
-    }
-  }
-
     modeRadios.forEach((r) => {
       r.addEventListener("change", updateDifficultyVisibility);
     });
@@ -685,10 +672,16 @@ window.addEventListener("DOMContentLoaded", function () {
   }
 
   function updateTurnUI() {
+
     if (!turnIndicatorEl) return;
     const isP1 = currentPlayer === 1;
-    turnIndicatorEl.textContent = isP1 ? "Player 1" : "Player 2";
-    // Change text color directly so it always reflects current player
+    const cpu = isCpuMode();
+
+    if (cpu) {
+      turnIndicatorEl.textContent = isP1 ? "Player" : "CPU";
+    } else {
+      turnIndicatorEl.textContent = isP1 ? "Player 1" : "Player 2";
+    }
     turnIndicatorEl.style.color = isP1 ? "var(--p1)" : "var(--p2)";
     turnIndicatorEl.style.fontWeight = "700";
   }
@@ -773,6 +766,21 @@ window.addEventListener("DOMContentLoaded", function () {
     );
   }
 
+  function updateLayoutForMode() {
+    if (!player1LabelEl || !player2LabelEl || !cpuInfoPanel) return;
+    if (isCpuMode()) {
+      // CPU modes: show CPU info, label as Player / CPU
+      cpuInfoPanel.style.display = "";
+      player1LabelEl.textContent = "Player";
+      player2LabelEl.textContent = "CPU";
+    } else {
+      // PvP: hide CPU info and label as Player 1 / Player 2
+      cpuInfoPanel.style.display = "none";
+      player1LabelEl.textContent = "Player 1";
+      player2LabelEl.textContent = "Player 2";
+    }
+  }
+
   function isCpuTurn() {
     return isCpuMode() && currentPlayer === CPU_PLAYER;
   }
@@ -813,12 +821,7 @@ function resetGameState() {
             if (difficultyRadios && difficultyRadios.length) {
               difficultyRadios.forEach((d) => {
                 if (d.checked) diff = d.value;
-            
-    // Update player name labels based on current mode (PvP vs CPU).
-    if (typeof updatePlayerLabels === "function") {
-      updatePlayerLabels();
-    }
-  });
+              });
             }
             if (diff === "normal") {
               gameMode = MODE_CPU_NORMAL;
@@ -837,6 +840,9 @@ function resetGameState() {
     }
 
     // Randomize CPU personality for this game based on mode
+    if (typeof updateLayoutForMode === "function") {
+      updateLayoutForMode();
+    }
     pickRandomPersonalityForMode();
 
     startScreen.classList.add("hidden");
@@ -855,14 +861,17 @@ function resetGameState() {
     gameUI.classList.add("hidden");
     endScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
+    // Ensure CPU difficulty row visibility matches current mode when returning
+    if (typeof updateDifficultyVisibility === "function") {
+          if (typeof updateLayoutForMode === "function") {
+      updateLayoutForMode();
+    }
+updateDifficultyVisibility();
+    }
   }
   function showOnlineScreen() {
-    if (onlineScreen) {
-      onlineScreen.classList.remove("hidden");
-    }
-    startScreen.classList.add("hidden");
-    gameUI.classList.add("hidden");
-    endScreen.classList.add("hidden");
+    // Redirect to the dedicated online menu page
+    window.location.href = "online.html";
   }
 
   function closeOnlineScreen() {
