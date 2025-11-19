@@ -1,374 +1,1946 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>VocaGrid Online</title>
-  <link rel="stylesheet" href="globals.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>VOCAGRID – Online Dictionary + Corpus Board</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="game.css" />
   <style>
-    body {
-      background: #050816;
-      color: #f4f4f5;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .online-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      box-sizing: border-box;
-    }
-    .online-card {
-      width: 100%;
-      max-width: 420px;
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 16px;
-      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.75);
-      padding: 20px 18px;
-      box-sizing: border-box;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-    }
-    .online-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .online-subtitle {
-      font-size: 13px;
-      opacity: 0.9;
-      margin-bottom: 16px;
-    }
-    .online-section-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-top: 12px;
-      margin-bottom: 6px;
-    }
-    .online-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .online-input {
-      flex: 1;
-      min-width: 0;
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      background: rgba(15, 23, 42, 0.9);
-      color: #e5e7eb;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-    .online-input::placeholder {
-      color: rgba(148, 163, 184, 0.8);
-    }
-    .online-btn {
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      white-space: nowrap;
-      background: linear-gradient(135deg, #22c55e, #22d3ee);
-      color: #020617;
-      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.08s ease;
-      box-shadow: 0 10px 25px rgba(45, 212, 191, 0.35);
-    }
-    .online-btn.secondary {
-      background: rgba(30, 64, 175, 0.9);
-      color: #e5e7eb;
-      box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4);
-    }
-    .online-btn:active {
-      transform: translateY(1px) scale(0.985);
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.8);
-      opacity: 0.95;
-    }
-    .online-status {
-      font-size: 13px;
-      line-height: 1.5;
-      margin-top: 8px;
-      min-height: 32px;
-      color: #e5e7eb;
-    }
-    .online-status strong {
-      color: #22c55e;
-    }
-    .online-code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      letter-spacing: 0.18em;
-      font-size: 18px;
-      padding: 6px 0;
-    }
-    .online-debug {
-      font-size: 11px;
-      margin-top: 8px;
-      max-height: 90px;
-      overflow: auto;
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 8px;
-      padding: 6px 8px;
-      border: 1px dashed rgba(148, 163, 184, 0.4);
-      color: #9ca3af;
-      white-space: pre-wrap;
-    }
-    .online-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      margin-top: 10px;
-      color: #a5b4fc;
-      text-decoration: none;
-    }
-    .online-link:hover {
-      text-decoration: underline;
+    /* Hide CPU Info panel on the online game screen */
+    .panel.cpu-info {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div class="online-container">
-    <div class="online-card">
-      <div class="online-title">VocaGrid Online (beta)</div>
-      <div class="online-subtitle">
-        This is a prototype online lobby.<br />
-        First, try <strong>creating or joining a private room</strong>.  
-        After that, you’ll be taken <strong>directly to the online game screen</strong>.
+  <!-- Start Screen -->
+  <div id="startScreen" class="screen start">
+    <h1 id="title">VOCAGRID</h1>
+
+    <div class="card rules">
+      <h2 id="i18n_rulesTitle">How to Play</h2>
+      <ul id="i18n_rulesList">
+        <li>Players take turns selecting tiles to make an English word (2 letters or more).</li>
+        <li>When you submit a valid word, those tiles become your color and stay on the board.</li>
+        <li>If you surround one of your own tiles on all four sides with your tiles, that tile becomes <strong>locked</strong>. Locked tiles cannot be used by your opponent, but you can still use them. If the surrounding tiles are taken back, the lock is broken.</li>
+        <li>You gain <strong>+1 point for each tile</strong> that was neutral and becomes yours for the first time.</li>
+        <li>The game ends when all 25 tiles are owned. The player with the higher total points wins.</li>
+      </ul>
+    </div>
+
+    <div class="mode-select">
+      <label>
+        <input type="radio" name="mode" value="pvp" checked />
+        Player vs Player
+      </label>
+      <label>
+        <input type="radio" name="mode" value="cpu" />
+        Player vs Computer
+      </label>
+    </div>
+
+    <div class="mode-select" id="difficultyRow" style="display: none;">
+      <span>Difficulty:</span>
+      <label>
+        <input type="radio" name="difficulty" value="easy" checked />
+        Easy
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="normal" />
+        Normal
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="hard" />
+        Hard
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="ultimate" />
+        Ultimate
+      </label>
+    </div>
+
+    <button id="startBtn" class="btn primary">Start</button>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="gameUI" class="screen game hidden">
+    <h1 id="gameTitle">VOCAGRID</h1>
+
+    <button id="backToStartBtn" class="btn back-btn">
+      ← <span id="i18n_backToStart">Back to Start</span>
+    </button>
+
+    <div class="remaining-tiles">
+      <span id="i18n_remaining">Remaining tiles</span>:
+      <span id="remainingCount">25</span>
+    </div>
+
+    <div class="game-layout">
+      <div class="board-section">
+        <div class="top-bar">
+          <div class="selected-wrap">
+            <div class="turn-indicator">
+              <span id="i18n_turnLabel">Turn</span>:
+              <span id="turnIndicator">Player 1</span>
+            </div>
+            <div id="selectedLabel">Selected:</div>
+            <div id="selectedArea" class="chips"></div>
+            <div class="potential-score">
+              <span id="i18n_potentialScore">Potential Score</span>:
+              <span id="potentialScore">—</span>
+            </div>
+            <div class="live-status">
+              <span id="liveStatusLabel">Status</span>:
+              <span id="liveStatusText">—</span>
+            </div>
+            <div id="wordSuggestions" class="word-suggestions"></div>
+          </div>
+        </div>
+
+        <div id="board" class="board"></div>
+
+        <div class="controls">
+          <button id="submitBtn" class="btn primary" type="button">Submit</button>
+          <button id="undoBtn" class="btn ghost" type="button">Undo</button>
+          <button id="clearBtn" class="btn ghost" type="button">Clear</button>
+        </div>
+
+        <p id="message" class="msg"></p>
+
+        <!-- Player box under the board -->
+        <div class="panel scores">
+          <h3 id="i18n_scoresTitle">Scores</h3>
+          <div class="score-area">
+            <div class="player-panel panel-player1">
+              <h3 class="panel-title">
+                <span id="i18n_player1Panel">Player 1</span>
+              </h3>
+              <div class="panel-content">
+                <div class="stat-row">
+                  <span class="stat-label" id="i18n_tilesLabel1">Tiles</span>
+                  <span class="stat-value" id="score1">0</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label" id="i18n_pointsLabel1">Points</span>
+                  <span class="stat-value" id="points1">0</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="player-panel panel-player2">
+              <h3 class="panel-title">
+                <span id="i18n_player2Panel">Player 2</span>
+              </h3>
+              <div class="panel-content">
+                <div class="stat-row">
+                  <span class="stat-label" id="i18n_tilesLabel2">Tiles</span>
+                  <span class="stat-value" id="score2">0</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label" id="i18n_pointsLabel2">Points</span>
+                  <span class="stat-value" id="points2">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- 1. Create private room (host) -->
-      <div class="online-section-title">1. Create a Private Room</div>
-      <div class="online-row">
-        <button id="btn-create-room" class="online-btn">
-          Create Room (Host)
-        </button>
+      <!-- Right side: meaning + pass + history -->
+      <div class="side-panel">
+        <div class="pass-row">
+          <button id="passBtn" class="btn ghost" type="button">Pass</button>
+        </div>
+
+        <div class="panel cpu-info">
+          <h3>CPU Info</h3>
+          <div class="cpu-personality-row">
+            <span class="label">Personality</span>
+            <span id="cpuPersonalityLabel">-</span>
+          </div>
+          <div class="cpu-move-row">
+            <span class="label">Last move</span>
+            <span id="cpuMoveLabel">-</span>
+          </div>
+        </div>
+
+        <div class="panel meaning">
+          <h3 id="i18n_meaningTitle">Meaning</h3>
+          <div class="meaning-player" id="meaningP1">
+            <h4>Player 1 last word</h4>
+            <div class="meaning-word" id="meaningWord1">-</div>
+            <div class="meaning-pos" id="meaningPos1"></div>
+            <div class="meaning-def" id="meaningDef1"></div>
+          </div>
+          <div class="meaning-player" id="meaningP2">
+            <h4>Player 2 last word</h4>
+            <div class="meaning-word" id="meaningWord2">-</div>
+            <div class="meaning-pos" id="meaningPos2"></div>
+            <div class="meaning-def" id="meaningDef2"></div>
+          </div>
+        </div>
+
+        <div class="panel history">
+          <h3 id="i18n_history">Word History</h3>
+          <ul id="wordHistory"></ul>
+        </div>
       </div>
-      <div id="create-room-result" class="online-status"></div>
-
-      <!-- 2. Join room as guest -->
-      <div class="online-section-title">2. Join a Room</div>
-      <div class="online-row">
-        <input
-          id="join-room-code"
-          class="online-input"
-          placeholder="Room code (e.g. AB3FQK)"
-        />
-        <button id="btn-join-room" class="online-btn secondary">
-          Join Room (Guest)
-        </button>
-      </div>
-      <div id="join-room-result" class="online-status"></div>
-
-      <!-- Debug area (for now keep it visible while we test) -->
-      <div class="online-section-title">Debug</div>
-      <div id="online-debug" class="online-debug"></div>
-
-      <a href="index.html" class="online-link">
-        ← Back to menu
-      </a>
     </div>
   </div>
 
-  <!-- Supabase JS client -->
+  <!-- End Screen -->
+  <div id="endScreen" class="screen end hidden">
+    <h2 id="resultText">Game Over</h2>
+
+    <div class="final-board-container">
+      <h3 id="i18n_finalBoard">Final Board</h3>
+      <div id="finalBoard" class="board"></div>
+    </div>
+
+    <div id="gameStats" class="game-stats"></div>
+
+    <button id="replayBtn" class="btn primary" type="button">Replay</button>
+  </div>
+
+  <script>
+window.addEventListener("DOMContentLoaded", function () {
+  const BOARD_SIZE = 5;
+  const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const DICT_API_BASE = "https://api.dictionaryapi.dev/api/v2/entries/en/";
+
+  // Approximate English letter frequencies (higher = more common)
+  const LETTER_FREQ = {
+    A: 8.2, B: 1.5, C: 2.8, D: 4.3, E: 12.0, F: 2.2, G: 2.0,
+    H: 6.1, I: 7.0, J: 0.2, K: 0.8, L: 4.0, M: 2.4, N: 6.7,
+    O: 7.5, P: 1.9, Q: 0.1, R: 6.0, S: 6.3, T: 9.1, U: 2.8,
+    V: 1.0, W: 2.4, X: 0.2, Y: 2.0, Z: 0.1
+  };
+
+  const VOWELS = ["A", "E", "I", "O", "U"];
+  const MAX_PER_LETTER = 2;
+
+  // Cache for dictionary lookups: word(lowercase) -> boolean (exists or not)
+  const dictCache = new Map();
+
+  // --- Game state ---
+  let tiles = [];
+  let currentPlayer = 1; // 1 or 2
+  let selectedIds = [];
+  const points = { 1: 0, 2: 0 }; // number of first-time captured tiles
+  let history = [];
+  let isChecking = false; // to prevent double submit
+  let draggedSelectedIndex = null; // index in selectedIds for drag & drop
+  // CPU personality
+  const PERSONALITY_AGGRESSIVE = "aggressive";
+  const PERSONALITY_DEFENSIVE  = "defensive";
+  const PERSONALITY_LONGWORD   = "longword";
+  const PERSONALITY_CAUTIOUS   = "cautious";
+  const PERSONALITY_GAMBLER    = "gambler";
+
+  let cpuPersonality = PERSONALITY_AGGRESSIVE;
+
+  // Mode & CPU state
+  const MODE_PVP = "pvp";
+  const MODE_CPU_EASY = "cpu_easy";
+  const MODE_CPU_NORMAL = "cpu_normal";
+  const MODE_CPU_HARD = "cpu_hard";
+  const MODE_CPU_ULTIMATE = "cpu_ultimate";
+  const CPU_PLAYER = 2; // In CPU modes, Player 2 is the CPU
+
+  let gameMode = MODE_PVP;
+  let isGameOver = false;
+  let isCpuThinking = false;
+  let isCpuSubmitting = false;
+  let cpuPrecomputedCandidates = [];
+
+
+  // DOM elements
+  const startScreen = document.getElementById("startScreen");
+  const gameUI = document.getElementById("gameUI");
+  const endScreen = document.getElementById("endScreen");
+
+  const boardEl = document.getElementById("board");
+  const selectedArea = document.getElementById("selectedArea");
+  const potentialScoreEl = document.getElementById("potentialScore");
+  const liveStatusText = document.getElementById("liveStatusText");
+  const remainingCountEl = document.getElementById("remainingCount");
+  const turnIndicatorEl = document.getElementById("turnIndicator");
+  const messageEl = document.getElementById("message");
+  const wordHistoryEl = document.getElementById("wordHistory");
+  const cpuPersonalityLabelEl = document.getElementById("cpuPersonalityLabel");
+  const cpuMoveLabelEl = document.getElementById("cpuMoveLabel");
+  const score1El = document.getElementById("score1");
+  const score2El = document.getElementById("score2");
+  const points1El = document.getElementById("points1");
+  const points2El = document.getElementById("points2");
+  const modeRadios = document.querySelectorAll('input[name="mode"]');
+  const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+  const difficultyRow = document.getElementById("difficultyRow");
+
+  function updateDifficultyVisibility() {
+    if (!difficultyRow) return;
+    let cpuSelected = false;
+    if (modeRadios && modeRadios.length) {
+      modeRadios.forEach((r) => {
+        if (r.checked && r.value === "cpu") {
+          cpuSelected = true;
+        }
+      });
+    }
+    difficultyRow.style.display = cpuSelected ? "block" : "none";
+  }
+
+  if (modeRadios && modeRadios.length) {
+    modeRadios.forEach((r) => {
+      r.addEventListener("change", updateDifficultyVisibility);
+    });
+  }
+  // Initialize difficulty visibility on load
+  updateDifficultyVisibility();
+
+
+  const resultTextEl = document.getElementById("resultText");
+  const finalBoardEl = document.getElementById("finalBoard");
+  const gameStatsEl = document.getElementById("gameStats");
+
+  const startBtn = document.getElementById("startBtn");
+  const backToStartBtn = document.getElementById("backToStartBtn");
+  const submitBtn = document.getElementById("submitBtn");
+  const undoBtn = document.getElementById("undoBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const replayBtn = document.getElementById("replayBtn");
+  const passBtn = document.getElementById("passBtn");
+
+  const meaningWord1El = document.getElementById("meaningWord1");
+  const meaningPos1El = document.getElementById("meaningPos1");
+  const meaningDef1El = document.getElementById("meaningDef1");
+  const meaningWord2El = document.getElementById("meaningWord2");
+  const meaningPos2El = document.getElementById("meaningPos2");
+  const meaningDef2El = document.getElementById("meaningDef2");
+
+  let liveCheckVersion = 0;
+
+  // Track words already used in this game and consecutive passes
+  let usedWords = new Set();
+  let consecutivePasses = 0;
+
+  function resetLiveStatus() {
+    if (liveStatusText) {
+      liveStatusText.textContent = "—";
+      liveStatusText.classList.remove("status-valid", "status-invalid");
+    }
+  }
+
+  // --- Online dictionary helpers ---
+  async function isInDictionary(word) {
+    const key = (word || "").toLowerCase();
+    if (!key) return false;
+
+    if (dictCache.has(key)) {
+      return dictCache.get(key);
+    }
+
+    try {
+      const res = await fetch(DICT_API_BASE + encodeURIComponent(key));
+      if (!res.ok) {
+        // 404 etc. -> treat as not found
+        dictCache.set(key, false);
+        return false;
+      }
+      const data = await res.json();
+      const exists = Array.isArray(data) && data.length > 0;
+      dictCache.set(key, exists);
+      return exists;
+    } catch (e) {
+      // Network error: treat as not found for now
+      dictCache.set(key, false);
+      return false;
+    }
+  }
+
+  async function fetchMeaning(word) {
+    const key = (word || "").toLowerCase();
+    try {
+      const res = await fetch(DICT_API_BASE + encodeURIComponent(key));
+      if (!res.ok) {
+        return null;
+      }
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) return null;
+
+      const entry = data[0];
+      let pos = "";
+      let def = "";
+
+      if (entry.meanings && entry.meanings.length > 0) {
+        const m = entry.meanings[0];
+        pos = m.partOfSpeech || "";
+        if (m.definitions && m.definitions.length > 0) {
+          const d = m.definitions[0];
+          def = d.definition || "";
+        }
+      }
+
+      return { word: key, pos, def };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // --- Word validation with online dictionary + inflection rules ---
+  async function validateWord(word) {
+    const lower = (word || "").toLowerCase();
+    const upper = lower.toUpperCase();
+
+    if (upper.length < 2) {
+      return {
+        ok: false,
+        reason: "Please make a word with at least 2 letters."
+      };
+    }
+
+    // Disallow reusing the same word within a single game
+    if (usedWords.has(lower)) {
+      return {
+        ok: false,
+        reason: "This word has already been used in this game."
+      };
+    }
+
+    // Reject -ed past tense if base form exists
+    if (lower.endsWith("ed") && lower.length > 3) {
+      const base = lower.slice(0, -2);
+      if (base.length >= 2) {
+        const baseExists = await isInDictionary(base);
+        if (baseExists) {
+          return {
+            ok: false,
+            reason: `Past tense (-ed) is not allowed. Please use the base form "${base}" instead.`
+          };
+        }
+      }
+    }
+
+    // Reject -s / -es forms if base form exists
+    if (lower.endsWith("s") && lower.length > 2) {
+      let baseExists = false;
+
+      const noS = lower.slice(0, -1);
+      if (noS.length >= 2) {
+        baseExists = await isInDictionary(noS);
+      }
+
+      if (!baseExists && lower.endsWith("es")) {
+        const noES = lower.slice(0, -2);
+        if (noES.length >= 2) {
+          baseExists = await isInDictionary(noES);
+        }
+      }
+
+      if (baseExists) {
+        return {
+          ok: false,
+          reason: "Forms ending in -s or -es (3rd person or plural) are not allowed. Please use the base form instead."
+        };
+      }
+    }
+
+    // Finally, check the word itself in the dictionary
+    const exists = await isInDictionary(lower);
+    if (!exists) {
+      return {
+        ok: false,
+        reason: "This word is not in the online dictionary."
+      };
+    }
+
+    return { ok: true, reason: "OK" };
+  }
+
+  // --- Letter generation helpers ---
+  function pickWeightedLetter(counts) {
+    let total = 0;
+    const candidates = [];
+
+    for (const ch of LETTERS) {
+      const used = counts[ch] || 0;
+      if (used >= MAX_PER_LETTER) continue;
+      const w = LETTER_FREQ[ch] || 1;
+      if (w <= 0) continue;
+      total += w;
+      candidates.push({ ch, cumulative: total });
+    }
+
+    if (candidates.length === 0) {
+      return "E";
+    }
+
+    const r = Math.random() * total;
+    for (const c of candidates) {
+      if (r < c.cumulative) return c.ch;
+    }
+    return candidates[candidates.length - 1].ch;
+  }
+
+  function createInitialTiles() {
+    tiles = [];
+
+    const grid = Array.from({ length: BOARD_SIZE }, () =>
+      Array(BOARD_SIZE).fill(null)
+    );
+
+    const counts = {};
+    for (const ch of LETTERS) counts[ch] = 0;
+
+    const positions = [];
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        positions.push({ r, c });
+      }
+    }
+    for (let i = positions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = positions[i];
+      positions[i] = positions[j];
+      positions[j] = tmp;
+    }
+
+    let posIndex = 0;
+
+    // Place each vowel at least once
+    for (const v of VOWELS) {
+      const { r, c } = positions[posIndex++];
+      grid[r][c] = v;
+      counts[v] = (counts[v] || 0) + 1;
+    }
+
+    // Fill remaining cells with weighted letters, max 2 per letter
+    for (; posIndex < positions.length; posIndex++) {
+      const { r, c } = positions[posIndex];
+      const ch = pickWeightedLetter(counts);
+      grid[r][c] = ch;
+      counts[ch] = (counts[ch] || 0) + 1;
+    }
+
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        tiles.push({
+          id: r + "-" + c,
+          row: r,
+          col: c,
+          letter: grid[r][c],
+          owner: null,
+          lockOwner: null
+        });
+      }
+    }
+  }
+
+  function calcCounts() {
+    let tiles1 = 0;
+    let tiles2 = 0;
+    let remaining = 0;
+    tiles.forEach((t) => {
+      if (t.owner === 1) tiles1++;
+      else if (t.owner === 2) tiles2++;
+      else remaining++;
+    });
+    return { tiles1, tiles2, remaining };
+  }
+
+  function recalcLocks() {
+    // Recalculate lockOwner for all tiles based on surrounding owners
+    tiles.forEach((t) => {
+      t.lockOwner = null;
+    });
+
+    function getTileAt(r, c) {
+      return tiles.find((tt) => tt.row === r && tt.col === c);
+    }
+
+    tiles.forEach((t) => {
+      // Only lock tiles that are already owned; neutral tiles cannot be locked
+      if (t.owner === null) {
+        t.lockOwner = null;
+        return;
+      }
+      const neighbors = [];
+      if (t.row > 0) neighbors.push(getTileAt(t.row - 1, t.col));
+      if (t.row < BOARD_SIZE - 1) neighbors.push(getTileAt(t.row + 1, t.col));
+      if (t.col > 0) neighbors.push(getTileAt(t.row, t.col - 1));
+      if (t.col < BOARD_SIZE - 1) neighbors.push(getTileAt(t.row, t.col + 1));
+
+      if (neighbors.length === 0) return;
+
+      let owner = null;
+      for (const n of neighbors) {
+        if (!n || n.owner === null) {
+          owner = null;
+          break;
+        }
+        if (owner === null) {
+          owner = n.owner;
+        } else if (owner !== n.owner) {
+          owner = null;
+          break;
+        }
+      }
+
+      if (owner !== null && t.owner === owner) {
+        t.lockOwner = owner;
+      }
+    });
+  }
+
+
+  function renderBoard(targetEl, useCurrentSelection) {
+    targetEl.innerHTML = "";
+    tiles.forEach((t) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.classList.add("tile");
+      if (t.owner === 1) btn.classList.add("used-player1");
+      if (t.owner === 2) btn.classList.add("used-player2");
+      if (t.lockOwner === 1) btn.classList.add("locked-p1");
+      if (t.lockOwner === 2) btn.classList.add("locked-p2");
+
+      const isSelected = useCurrentSelection && selectedIds.includes(t.id);
+      btn.textContent = isSelected ? "" : t.letter;
+      btn.dataset.id = t.id;
+
+      if (targetEl === boardEl) {
+        btn.addEventListener("click", handleTileClick);
+      }
+
+      targetEl.appendChild(btn);
+    });
+  }
+
+  function buildCurrentWord() {
+    let word = "";
+    selectedIds.forEach((id) => {
+      const tile = tiles.find((t) => t.id === id);
+      if (tile) word += tile.letter;
+    });
+    return word;
+  }
+
+  function updateSelectedUI() {
+    selectedArea.innerHTML = "";
+    let word = "";
+    selectedIds.forEach((id) => {
+      const tile = tiles.find((t) => t.id === id);
+      if (!tile) return;
+      word += tile.letter;
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = tile.letter;
+      chip.dataset.id = id;
+      chip.setAttribute("draggable", "true");
+      selectedArea.appendChild(chip);
+    });
+
+    if (word.length >= 2) {
+      let gain = 0;
+      selectedIds.forEach((id) => {
+        const tile = tiles.find((t) => t.id === id);
+        if (tile && tile.owner === null) gain++;
+      });
+      potentialScoreEl.textContent = gain.toString();
+    } else {
+      potentialScoreEl.textContent = "—";
+    }
+
+    triggerLiveValidation();
+  }
+
+  function updateScoresUI() {
+    const { tiles1, tiles2, remaining } = calcCounts();
+    score1El.textContent = String(tiles1);
+    score2El.textContent = String(tiles2);
+    points1El.textContent = String(points[1]);
+    points2El.textContent = String(points[2]);
+    remainingCountEl.textContent = String(remaining);
+  }
+
+  function updateTurnUI() {
+    if (!turnIndicatorEl) return;
+    const isP1 = currentPlayer === 1;
+    turnIndicatorEl.textContent = isP1 ? "Player 1" : "Player 2";
+    // Change text color directly so it always reflects current player
+    turnIndicatorEl.style.color = isP1 ? "var(--p1)" : "var(--p2)";
+    turnIndicatorEl.style.fontWeight = "700";
+  }
+
+  function renderHistory() {
+    wordHistoryEl.innerHTML = "";
+    history.forEach((entry) => {
+      const li = document.createElement("li");
+      li.innerHTML =
+        "<strong>" +
+        (entry.player === 1 ? "P1" : "P2") +
+        ":</strong> " +
+        entry.word +
+        " (+" +
+        entry.gain +
+        ")";
+      wordHistoryEl.appendChild(li);
+    });
+  }
+
+  function resetMeaningBoxes() {
+    meaningWord1El.textContent = "-";
+    meaningPos1El.textContent = "";
+    meaningDef1El.textContent = "";
+    meaningWord2El.textContent = "-";
+    meaningPos2El.textContent = "";
+    meaningDef2El.textContent = "";
+  }
+
+  function applyMeaningToBox(player, info, fallbackWord) {
+    const word = info && info.word ? info.word : (fallbackWord || "-");
+    const pos = info && info.pos ? info.pos : "";
+    const def = info && info.def ? info.def : "No definition found.";
+
+    if (player === 1) {
+      meaningWord1El.textContent = word;
+      meaningPos1El.textContent = pos;
+      meaningDef1El.textContent = def;
+    } else {
+      meaningWord2El.textContent = word;
+      meaningPos2El.textContent = pos;
+      meaningDef2El.textContent = def;
+    }
+  }
+
+  async function updateMeaningBoxForPlayer(player, word) {
+    const info = await fetchMeaning(word);
+    applyMeaningToBox(player, info, word.toLowerCase());
+  }
+
+  function triggerLiveValidation() {
+    if (!liveStatusText) return;
+    const word = buildCurrentWord();
+    liveStatusText.classList.remove("status-valid", "status-invalid");
+    if (!word || word.length < 2) {
+      liveStatusText.textContent = "—";
+      return;
+    }
+    const current = ++liveCheckVersion;
+    liveStatusText.textContent = "Checking...";
+    validateWord(word).then((result) => {
+      if (current !== liveCheckVersion) return;
+      liveStatusText.textContent = result.ok ? "Valid" : "Invalid";
+      if (result.ok) {
+        liveStatusText.classList.add("status-valid");
+      } else {
+        liveStatusText.classList.add("status-invalid");
+      }
+    }).catch(() => {
+      if (current !== liveCheckVersion) return;
+      liveStatusText.textContent = "—";
+    });
+  }
+
+
+  function isCpuMode() {
+    return (
+      gameMode === MODE_CPU_EASY ||
+      gameMode === MODE_CPU_NORMAL ||
+      gameMode === MODE_CPU_HARD ||
+      gameMode === MODE_CPU_ULTIMATE
+    );
+  }
+
+  function isCpuTurn() {
+    return isCpuMode() && currentPlayer === CPU_PLAYER;
+  }
+
+  function resetGameState() {
+    createInitialTiles();
+    currentPlayer = 1;
+    selectedIds = [];
+    points[1] = 0;
+    points[2] = 0;
+    history = [];
+    usedWords = new Set();
+    consecutivePasses = 0;
+    isGameOver = false;
+    isCpuThinking = false;
+    isCpuSubmitting = false;
+    cpuPrecomputedCandidates = [];
+    messageEl.textContent = "";
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    updateScoresUI();
+    updateTurnUI();
+    renderHistory();
+    resetMeaningBoxes();
+    resetLiveStatus();
+  }
+
+  function startGame() {
+    // Decide game mode from start screen radios
+    gameMode = MODE_PVP;
+
+    if (modeRadios && modeRadios.length) {
+      modeRadios.forEach((r) => {
+        if (r.checked) {
+          if (r.value === "cpu") {
+            // Player vs Computer
+            let diff = "easy";
+            if (difficultyRadios && difficultyRadios.length) {
+              difficultyRadios.forEach((d) => {
+                if (d.checked) diff = d.value;
+              });
+            }
+            if (diff === "normal") {
+              gameMode = MODE_CPU_NORMAL;
+            } else if (diff === "hard") {
+              gameMode = MODE_CPU_HARD;
+            } else if (diff === "ultimate") {
+              gameMode = MODE_CPU_ULTIMATE;
+            } else {
+              gameMode = MODE_CPU_EASY;
+            }
+          } else {
+            gameMode = MODE_PVP;
+          }
+        }
+      });
+    }
+
+    // Randomize CPU personality for this game based on mode
+    pickRandomPersonalityForMode();
+
+    startScreen.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    gameUI.classList.remove("hidden");
+    resetGameState();
+
+    // If CPU mode and it's the human's turn (Player 1), start background thinking
+    if (isCpuMode() && currentPlayer === 1) {
+      startCpuBackgroundThinking();
+    }
+  }
+
+
+  function backToStart() {
+    gameUI.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+  }
+
+  function handleTileClick(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id) return;
+    const tile = tiles.find((t) => t.id === id);
+    if (!tile) return;
+    if (tile.lockOwner && tile.lockOwner !== currentPlayer) {
+      messageEl.textContent = "You cannot use an opponent's locked tile.";
+      return;
+    }
+    const idx = selectedIds.indexOf(id);
+    if (idx === -1) {
+      selectedIds.push(id);
+    } else {
+      selectedIds.splice(idx, 1);
+    }
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    messageEl.textContent = "";
+  }
+
+  function clearSelection() {
+    selectedIds = [];
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    resetLiveStatus();
+    messageEl.textContent = "";
+  }
+
+  function undoSelection() {
+    if (selectedIds.length === 0) return;
+    selectedIds.pop();
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    resetLiveStatus();
+    messageEl.textContent = "";
+  }
+
+  async function submitWord() {
+    if (isChecking) return;
+
+    const word = buildCurrentWord();
+    let cpuMoveStats = null;
+
+    if (selectedIds.length === 0) {
+      messageEl.textContent = "No tiles are selected.";
+      return;
+    }
+
+    if (word.length < 2) {
+      messageEl.textContent =
+        "Invalid word: Please make a word with at least 2 letters.";
+      return;
+    }
+
+    messageEl.textContent = "Checking word...";
+    isChecking = true;
+    const validation = isCpuSubmitting
+      ? await validateWithHybrid(word)
+      : await validateWord(word);
+    isChecking = false;
+
+    if (!validation.ok) {
+      if (isCpuSubmitting) {
+        // CPU: 無効単語はそのまま「パス」扱いにして詰まらないようにする
+        handlePass();
+      } else {
+        messageEl.textContent = "Invalid word: " + validation.reason;
+      }
+      return;
+    }
+
+    const lowerWord = word.toLowerCase();
+    if (usedWords.has(lowerWord)) {
+      messageEl.textContent = "Invalid word: This word has already been used in this game.";
+      return;
+    }
+
+    if (isCpuSubmitting && isCpuTurn()) {
+      cpuMoveStats = evaluateMoveForDisplay(selectedIds.slice(), word.toUpperCase());
+    }
+
+    let gain = 0;
+
+    selectedIds.forEach((id) => {
+      const tile = tiles.find((t) => t.id === id);
+      if (!tile) return;
+      if (tile.owner === null) {
+        gain++;
+        points[currentPlayer]++;
+      }
+      tile.owner = currentPlayer;
+    });
+
+    history.unshift({
+      player: currentPlayer,
+      word: word.toUpperCase(),
+      gain: gain
+    });
+
+    usedWords.add(lowerWord);
+    consecutivePasses = 0;
+
+    updateMeaningBoxForPlayer(currentPlayer, word);
+
+    selectedIds = [];
+    recalcLocks();
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    updateScoresUI();
+    renderHistory();
+    messageEl.textContent = "";
+
+    const allOwned = tiles.every((t) => t.owner !== null);
+    if (allOwned) {
+      endGame();
+    } else {
+      currentPlayer = currentPlayer === 1 ? 2 : 1;
+      updateTurnUI();
+
+      if (isCpuMode()) {
+        if (isCpuTurn()) {
+          maybeStartCpuTurn();
+        } else {
+          startCpuBackgroundThinking();
+        }
+      }
+    }
+  }
+
+
+  function handlePass() {
+    // Record the pass in history
+    history.unshift({
+      player: currentPlayer,
+      word: "(PASS)",
+      gain: 0
+    });
+
+    selectedIds = [];
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    renderHistory();
+    messageEl.textContent = "Player " + currentPlayer + " passes.";
+
+    consecutivePasses += 1;
+
+    // Two consecutive passes (P1 -> P2) ends the game
+    if (consecutivePasses >= 2) {
+      endGame();
+      return;
+    }
+
+    currentPlayer = currentPlayer === 1 ? 2 : 1;
+    updateTurnUI();
+
+    if (isCpuMode()) {
+      if (isCpuTurn()) {
+        maybeStartCpuTurn();
+      } else {
+        startCpuBackgroundThinking();
+      }
+    }
+  }
+
+  function endGame() {
+    isGameOver = true;
+    gameUI.classList.add("hidden");
+    endScreen.classList.remove("hidden");
+
+    const { tiles1, tiles2 } = calcCounts();
+    const p1 = points[1];
+    const p2 = points[2];
+
+    if (p1 > p2) {
+      resultTextEl.textContent = "Player 1 wins!";
+    } else if (p2 > p1) {
+      resultTextEl.textContent = "Player 2 wins!";
+    } else {
+      resultTextEl.textContent = "Draw!";
+    }
+
+    renderBoard(finalBoardEl, false);
+
+    gameStatsEl.innerHTML = "";
+    const p = document.createElement("p");
+    p.innerHTML =
+      "<strong>Player 1</strong> – Tiles: " +
+      tiles1 +
+      ", Points: " +
+      p1 +
+      "<br>" +
+      "<strong>Player 2</strong> – Tiles: " +
+      tiles2 +
+      ", Points: " +
+      p2 +
+      "<br>" +
+      "Total unique tiles captured: " +
+      (p1 + p2) +
+      " / 25";
+    gameStatsEl.appendChild(p);
+
+    if (history.length > 0) {
+      const lastEntry = history[0];
+      let longestEntry = history[0];
+      history.forEach((entry) => {
+        if (entry.word && entry.word.length > longestEntry.word.length) {
+          longestEntry = entry;
+        }
+      });
+
+      const lastP = document.createElement("p");
+      lastP.innerHTML =
+        "<strong>Last word used:</strong> " +
+        lastEntry.word +
+        " (" +
+        (lastEntry.player === 1 ? "Player 1" : "Player 2") +
+        ")";
+
+      const longestP = document.createElement("p");
+      longestP.innerHTML =
+        "<strong>Longest word used:</strong> " +
+        longestEntry.word +
+        " (" +
+        longestEntry.word.length +
+        " letters, " +
+        (longestEntry.player === 1 ? "Player 1" : "Player 2") +
+        ")";
+
+      gameStatsEl.appendChild(lastP);
+      gameStatsEl.appendChild(longestP);
+    }
+  }
+
+  // Selected area drag & drop + tap handlers (event delegation)
+  selectedArea.addEventListener("dragstart", (e) => {
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+    const id = chip.dataset.id;
+    draggedSelectedIndex = selectedIds.indexOf(id);
+    if (draggedSelectedIndex === -1) {
+      draggedSelectedIndex = null;
+      return;
+    }
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+    }
+  });
+
+  selectedArea.addEventListener("dragover", (e) => {
+    if (draggedSelectedIndex === null) return;
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "move";
+    }
+  });
+
+  selectedArea.addEventListener("drop", (e) => {
+    if (draggedSelectedIndex === null) return;
+    e.preventDefault();
+    const chip = e.target.closest(".chip");
+    let toIndex = selectedIds.length - 1;
+    if (chip) {
+      const id = chip.dataset.id;
+      const idx = selectedIds.indexOf(id);
+      if (idx !== -1) {
+        toIndex = idx;
+      }
+    }
+    const fromIndex = draggedSelectedIndex;
+    if (fromIndex !== toIndex && fromIndex >= 0 && fromIndex < selectedIds.length) {
+      const moved = selectedIds.splice(fromIndex, 1)[0];
+      selectedIds.splice(toIndex, 0, moved);
+      updateSelectedUI();
+    }
+    draggedSelectedIndex = null;
+  });
+
+  selectedArea.addEventListener("dragend", () => {
+    draggedSelectedIndex = null;
+  });
+
+  selectedArea.addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+    const id = chip.dataset.id;
+    const idx = selectedIds.indexOf(id);
+    if (idx !== -1) {
+      selectedIds.splice(idx, 1);
+      renderBoard(boardEl, true);
+      updateSelectedUI();
+      messageEl.textContent = "";
+    }
+  });
+
+
+
+  function pickRandomPersonalityForMode() {
+    let candidates;
+    if (gameMode === MODE_CPU_EASY) {
+      // Easy: 慎重・守備寄りが多めだが、たまに変なのも混じる
+      candidates = [
+        PERSONALITY_CAUTIOUS,
+        PERSONALITY_CAUTIOUS,
+        PERSONALITY_GAMBLER,
+        PERSONALITY_DEFENSIVE,
+        PERSONALITY_LONGWORD
+      ];
+    } else if (gameMode === MODE_CPU_NORMAL) {
+      // Normal: ほぼ全タイプからランダム。いろんな相手と戦っている感じに。
+      candidates = [
+        PERSONALITY_AGGRESSIVE,
+        PERSONALITY_AGGRESSIVE,
+        PERSONALITY_DEFENSIVE,
+        PERSONALITY_DEFENSIVE,
+        PERSONALITY_LONGWORD,
+        PERSONALITY_CAUTIOUS,
+        PERSONALITY_GAMBLER
+      ];
+    } else if (gameMode === MODE_CPU_HARD) {
+      // Hard: ロングワード + 攻撃/防御がバランスよく出るように
+      candidates = [
+        PERSONALITY_LONGWORD,
+        PERSONALITY_LONGWORD,
+        PERSONALITY_AGGRESSIVE,
+        PERSONALITY_AGGRESSIVE,
+        PERSONALITY_DEFENSIVE,
+        PERSONALITY_DEFENSIVE,
+        PERSONALITY_GAMBLER
+      ];
+    } else if (gameMode === MODE_CPU_ULTIMATE) {
+      // Ultimate: 全部盛り。ロング＆攻撃/防御を厚めにしつつ、たまに慎重/ギャンブラーも混ざる
+      candidates = [
+        PERSONALITY_LONGWORD,
+        PERSONALITY_LONGWORD,
+        PERSONALITY_LONGWORD,
+        PERSONALITY_AGGRESSIVE,
+        PERSONALITY_AGGRESSIVE,
+        PERSONALITY_AGGRESSIVE,
+        PERSONALITY_DEFENSIVE,
+        PERSONALITY_DEFENSIVE,
+        PERSONALITY_GAMBLER,
+        PERSONALITY_CAUTIOUS
+      ];
+    } else {
+      return;
+    }
+    const idx = Math.floor(Math.random() * candidates.length);
+    cpuPersonality = candidates[idx];
+    updateCpuPersonalityLabel();
+  }
+
+
+
+  // Common prefixes/suffixes for Hard/Longword CPU preference
+  const COMMON_PREFIXES = [
+    "RE","UN","IN","IM","DIS","PRE","PRO","SUB","INTER","OVER","UNDER"
+  ];
+  const COMMON_SUFFIXES = [
+    "S","ES","ED","ING","ER","EST","LY","LESS","FUL","NESS","MENT","TION","ABLE"
+  ];
+
+  function getAffixScore(wordUpper) {
+    if (!wordUpper) return 0;
+    let score = 0;
+    for (const p of COMMON_PREFIXES) {
+      if (wordUpper.startsWith(p) && wordUpper.length > p.length + 1) {
+        score++;
+      }
+    }
+    for (const s of COMMON_SUFFIXES) {
+      if (wordUpper.endsWith(s) && wordUpper.length > s.length + 1) {
+        score++;
+      }
+    }
+    return score;
+  }
+
+
+
+  function getCpuPersonalityLabelText() {
+    switch (cpuPersonality) {
+      case PERSONALITY_AGGRESSIVE:
+        return "Aggressive (攻撃)";
+      case PERSONALITY_DEFENSIVE:
+        return "Defensive (防御)";
+      case PERSONALITY_LONGWORD:
+        return "Longword (ロング)";
+      case PERSONALITY_CAUTIOUS:
+        return "Cautious (慎重)";
+      case PERSONALITY_GAMBLER:
+        return "Gambler (ギャンブル)";
+      default:
+        return "-";
+    }
+  }
+
+  function updateCpuPersonalityLabel() {
+    if (!cpuPersonalityLabelEl) return;
+    cpuPersonalityLabelEl.textContent = getCpuPersonalityLabelText();
+  }
+
+  function evaluateMoveForDisplay(tileIds, wordUpper) {
+    const ids = tileIds || [];
+    let gain = 0;
+    let attack = 0;
+    let nearLock = 0;
+    const attackIds = [];
+    const gainIds = [];
+
+    ids.forEach((id) => {
+      const tile = tiles.find((t) => t.id === id);
+      if (!tile) return;
+      if (tile.owner === null) {
+        gain++;
+        gainIds.push(id);
+      } else if (tile.owner !== CPU_PLAYER) {
+        attack++;
+        attackIds.push(id);
+      }
+
+      // 近傍の CPU タイルを数えて「固めやすさ」をざっくり見る
+      const coords = [
+        [tile.row - 1, tile.col],
+        [tile.row + 1, tile.col],
+        [tile.row, tile.col - 1],
+        [tile.row, tile.col + 1]
+      ];
+      let sameOwnerNeighbors = 0;
+      coords.forEach(([r, c]) => {
+        if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return;
+        const n = tiles.find((tt) => tt.row === r && tt.col === c);
+        if (!n) return;
+        const willCapture =
+          ids.includes(n.id) && (n.owner === null || n.owner !== CPU_PLAYER);
+        const ownerAfter = willCapture ? CPU_PLAYER : n.owner;
+        if (ownerAfter === CPU_PLAYER) sameOwnerNeighbors++;
+      });
+      if (sameOwnerNeighbors >= 2) {
+        nearLock++;
+      }
+    });
+
+    const len = wordUpper.length;
+    const affix = typeof getAffixScore === "function" ? getAffixScore(wordUpper) : 0;
+
+    return {
+      word: wordUpper,
+      gain,
+      attack,
+      nearLock,
+      len,
+      affix,
+      attackIds,
+      gainIds
+    };
+  }
+
+  function updateCpuMoveLabelFromStats(stats) {
+    if (!cpuMoveLabelEl || !stats) return;
+    const tags = [];
+    if (stats.attack > 0) tags.push("ATTACK x" + stats.attack);
+    if (stats.gain > 0) tags.push("GAIN x" + stats.gain);
+    if (stats.nearLock > 0) tags.push("LOCK x" + stats.nearLock);
+    if (stats.len >= 6) tags.push("LONG " + stats.len);
+
+    const base = stats.word || "";
+    if (tags.length) {
+      cpuMoveLabelEl.textContent = base + " (" + tags.join(" / ") + ")";
+    } else {
+      cpuMoveLabelEl.textContent = base || "-";
+    }
+  }
+
+  function flashTilesByIds(ids, className, durationMs) {
+    if (!boardEl || !ids || !ids.length) return;
+    ids.forEach((id) => {
+      const btn = boardEl.querySelector('.tile[data-id="' + id + '"]');
+      if (!btn) return;
+      btn.classList.add(className);
+      setTimeout(() => {
+        btn.classList.remove(className);
+      }, durationMs || 600);
+    });
+  }
+
+  function pickCandidateByPersonality(candidates) {
+    if (!candidates || !candidates.length) return null;
+    const list = candidates.slice();
+
+    switch (cpuPersonality) {
+      case PERSONALITY_AGGRESSIVE:
+        // gain 大きい順
+        list.sort((a, b) => b.gain - a.gain);
+        break;
+
+      case PERSONALITY_DEFENSIVE:
+        // 中間〜やや高め gain を好むイメージ: gain の差が小さい方を優先
+        list.sort((a, b) => {
+          const midA = Math.abs(a.gain - 2);
+          const midB = Math.abs(b.gain - 2);
+          return midA - midB;
+        });
+        break;
+
+      case PERSONALITY_LONGWORD:
+        // 文字数優先 + 接頭語・接尾語を好む。最後に gain で調整
+        list.sort((a, b) => {
+          const aLen = a.word.length;
+          const bLen = b.word.length;
+          if (bLen !== aLen) {
+            return bLen - aLen;
+          }
+          const aAffix = getAffixScore(a.word.toUpperCase());
+          const bAffix = getAffixScore(b.word.toUpperCase());
+          if (bAffix !== aAffix) {
+            return bAffix - aAffix;
+          }
+          return b.gain - a.gain;
+        });
+        break;
+
+      case PERSONALITY_CAUTIOUS:
+        // gain 小さい順（弱めの手）
+        list.sort((a, b) => a.gain - b.gain);
+        break;
+
+      case PERSONALITY_GAMBLER: {
+        const viable = list.filter((c) => c.gain >= 1);
+        const pool = viable.length ? viable : list;
+        const idx = Math.floor(Math.random() * pool.length);
+        return pool[idx];
+      }
+
+      default:
+        // デフォルトは攻撃型っぽく
+        list.sort((a, b) => b.gain - a.gain);
+    }
+
+    const bucketSize = Math.min(3, list.length);
+    const choiceIndex = Math.floor(Math.random() * bucketSize);
+    return list[choiceIndex];
+  }
+
+  // --- CPU helpers ---
+  const CPU_WORDS_EASY = [
+    "CAT","DOG","BOOK","GAME","TIME","HAND","TREE","WATER","FISH","BIRD",
+    "STAR","MOON","SUN","RAIN","WIND","FIRE","ROAD","HOME","FOOD","WORD"
+  ];
+
+
+  // Offline lexicons for CPU (core & long-word focus)
+  // ※ 本番ではもっと大きなリストに差し替え推奨
+  const OFFLINE_LEXICON_CORE = [
+    "TIME","HAND","ROAD","HOME","WORD","GAME","BOOK","TREE","WATER","FISH","BIRD",
+    "STAR","MOON","FIRE","WIND","RAIN","FOOD","ROOM","AREA","LEVEL","POINT",
+    "BOARD","SCORE","FIELD","POWER","LIGHT","STONE","RIVER","BRIDGE","APPLE",
+    "HOUSE","WORLD","HEART","MOUSE","NIGHT","MONEY","SUGAR","SOUND","VOICE",
+    "SMILE","THING","PLACE","PEACE","SLEEP","DREAM","SWEET","BREAD","CHEST",
+    "GRASS","PLANT","SHAPE","SHORT","SMALL","LARGE","QUICK","SLOW","EARTH",
+    "NORTH","SOUTH","EAST","WEST","OCEAN","BEACH","MUSIC","MOVIE","HAPPY","FUNNY",
+    "TIRED","READY","STORE","SHOP","METAL","PAPER","CLOUD","GROUP","CLASS",
+    "TITLE","GUARD","BRAND","ROUND","COLOR","BLACK","WHITE","GREEN","BROWN",
+    "GOLD","SILVER","ANGEL","DEVIL","MAGIC","TRICK"
+  ];
+
+  const OFFLINE_LEXICON_LONG = [
+    "AROUND","PLAYER","STREAM","STREET","BRIDGE","GARDEN","FUTURE","ATTACK",
+    "DEFEND","LETTER","PUZZLE","RANDOM","TARGET","PATTERN","POINTS","CORNER",
+    "CENTER","BORDER","DOUBLE","TRIPLE","LOCKED","ARROWS","INSIDE","COUNTER",
+    "STATION","AIRPORT","LIBRARY","FOREST","MOUNTAIN","VILLAGE","KINGDOM",
+    "ANIMALS","CREATOR","LEADING","RUNNING","WALKING","TURNING","POINTED",
+    "CIRCLED","OUTSIDE","INSIDER","BETWEEN","TENSION","MISSION","VICTORY",
+    "DEFEAT","CAPTURE","DEFENCE","OFFENCE","BALANCE","CHANNEL","CORRIDOR",
+    "BARRIER","PASSAGE","BRACKET","TRIANGLE","SQUARES","CROSSING","BLOSSOM",
+    "FLOWERS","HARVEST","WEATHER","SUNRISE","SUNSET","TWILIGHT","SHADOWS",
+    "MIRROR","SPIRITS","PHANTOM","LEGEND","MYSTERY","PROCESS","PROJECT","PROFILE",
+    "EXAMPLE","MESSAGE","PACKAGE"
+  ];
+
+  // CPU がゲーム中に覚えていく単語キャッシュ（オンラインOKだった単語を保存）
+  const cpuLexiconCache = new Set();
+
+  function isInOfflineLexicon(wordUpper) {
+    if (!wordUpper) return false;
+    if (OFFLINE_LEXICON_CORE.includes(wordUpper)) return true;
+    if (OFFLINE_LEXICON_LONG.includes(wordUpper)) return true;
+    return false;
+  }
+
+  function canMakeWordFromBoard(wordUpper, player) {
+    if (!wordUpper) return false;
+    const chars = wordUpper.split("");
+    const counts = {};
+    tiles.forEach((t) => {
+      if (t.lockOwner && t.lockOwner !== player) return;
+      const ch = t.letter;
+      counts[ch] = (counts[ch] || 0) + 1;
+    });
+    for (const ch of chars) {
+      if (!counts[ch]) return false;
+      counts[ch]--;
+    }
+    return true;
+  }
+
+  function getOfflineLexiconCandidates(minLen, maxLenWord, player, preferLong) {
+    const core = OFFLINE_LEXICON_CORE || [];
+    const longs = OFFLINE_LEXICON_LONG || [];
+    const primary = preferLong ? longs : core;
+    const secondary = preferLong ? core : longs;
+    const results = [];
+
+    function collectFromLexicon(lex) {
+      for (const w of lex) {
+        const upper = w.toUpperCase();
+        const len = upper.length;
+        if (len < minLen || len > maxLenWord) continue;
+        if (!canMakeWordFromBoard(upper, player)) continue;
+        if (usedWords.has(upper.toLowerCase())) continue;
+        results.push(upper);
+        if (results.length >= 40) break; // 上限
+      }
+    }
+
+    collectFromLexicon(primary);
+    if (results.length < 40) {
+      collectFromLexicon(secondary);
+    }
+
+    return results;
+  }
+
+  async function validateWithHybrid(word) {
+    const upper = (word || "").toUpperCase();
+    if (!upper) return { ok: false };
+
+    // 1) すでにキャッシュ済みなら即OK
+    if (cpuLexiconCache.has(upper)) {
+      return { ok: true };
+    }
+
+    // 2) オフライン辞書に含まれていればOK扱い
+    if (isInOfflineLexicon(upper)) {
+      cpuLexiconCache.add(upper);
+      return { ok: true };
+    }
+
+    // 3) 最後の手段としてオンライン辞書に問い合わせ
+    const res = await validateWord(word);
+    if (res.ok) {
+      cpuLexiconCache.add(upper);
+    }
+    return res;
+  }
+
+  function getUsableTilesForCpu() {
+    // CPU can use any tile except an opponent's locked tile
+    return tiles.filter((t) => !(t.lockOwner && t.lockOwner !== CPU_PLAYER));
+  }
+
+  function randomInt(min, max) {
+    return min + Math.floor(Math.random() * (max - min + 1));
+  }
+
+  function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function findTilesForWordForPlayer(word, player) {
+    const chars = (word || "").toUpperCase().split("");
+    const available = tiles.filter((t) => {
+      if (t.lockOwner && t.lockOwner !== player) return false;
+      return true;
+    });
+    const chosen = [];
+    const usedIds = new Set();
+    for (const ch of chars) {
+      const idx = available.findIndex(
+        (t) => t.letter === ch && !usedIds.has(t.id)
+      );
+      if (idx === -1) return null;
+      const tile = available[idx];
+      chosen.push(tile);
+      usedIds.add(tile.id);
+    }
+    return chosen.map((t) => t.id);
+  }
+
+
+  async function generateCpuCandidatesEasy(
+    maxCandidates = 5,
+    maxTries = 40,
+    minLen = 3,
+    maxLenWord = 5
+  ) {
+    const candidates = [];
+    const triedWords = new Set();
+    const startTime = Date.now();
+    const TIME_LIMIT_MS =
+      gameMode === MODE_CPU_ULTIMATE ? 4500 : 3000;
+
+    const usable = getUsableTilesForCpu();
+    if (usable.length < 2) return candidates;
+
+    // まずはオフライン辞書から、盤面で作れる単語を優先的に拾う
+    const preferLong =
+      gameMode === MODE_CPU_NORMAL ||
+      gameMode === MODE_CPU_HARD ||
+      gameMode === MODE_CPU_ULTIMATE; // Normal/Hard/Ultimate ではロング寄り
+    const offlineWords = getOfflineLexiconCandidates(
+      minLen,
+      maxLenWord,
+      CPU_PLAYER,
+      preferLong
+    );
+
+    for (const upper of offlineWords) {
+      if (candidates.length >= maxCandidates) break;
+      const lower = upper.toLowerCase();
+      if (triedWords.has(lower) || usedWords.has(lower)) continue;
+      triedWords.add(lower);
+
+      const ids = findTilesForWordForPlayer(upper, CPU_PLAYER);
+      if (!ids) continue;
+
+      let gain = 0;
+      ids.forEach((id) => {
+        const tile = tiles.find((t) => t.id === id);
+        if (tile && tile.owner === null) gain++;
+      });
+
+      candidates.push({
+        word: upper,
+        tileIds: ids,
+        gain
+      });
+    }
+
+    // 必要数に達していなければ、従来通りランダム生成 + ハイブリッド検証
+    for (
+      let attempt = 0;
+      attempt < maxTries && candidates.length < maxCandidates;
+      attempt++
+    ) {
+      if (Date.now() - startTime > TIME_LIMIT_MS) break;
+
+      let len = randomInt(minLen, maxLenWord);
+      if (usable.length < len) len = usable.length;
+      if (len < 2) continue;
+
+      const pool = shuffleArray(usable);
+      const chosen = pool.slice(0, len);
+      const word = chosen.map((t) => t.letter).join("");
+      const lower = word.toLowerCase();
+
+      if (triedWords.has(lower) || usedWords.has(lower)) continue;
+      triedWords.add(lower);
+
+      const validation = await validateWithHybrid(word);
+      if (!validation.ok) continue;
+
+      let gain = 0;
+      chosen.forEach((t) => {
+        if (t.owner === null) gain++;
+      });
+
+      candidates.push({
+        word,
+        tileIds: chosen.map((t) => t.id),
+        gain
+      });
+    }
+
+    // それでもダメなら小さなビルトインリストからフォールバック
+    if (candidates.length === 0) {
+      for (const w of CPU_WORDS_EASY) {
+        const wordLen = w.length;
+        if (wordLen < minLen || wordLen > maxLenWord) continue;
+        const lower = w.toLowerCase();
+        if (usedWords.has(lower) || triedWords.has(lower)) continue;
+
+        const ids = findTilesForWordForPlayer(w, CPU_PLAYER);
+        if (!ids) continue;
+
+        const validation = await validateWithHybrid(w);
+        if (!validation.ok) continue;
+
+        let gain = 0;
+        ids.forEach((id) => {
+          const tile = tiles.find((t) => t.id === id);
+          if (tile && tile.owner === null) gain++;
+        });
+
+        candidates.push({
+          word: w,
+          tileIds: ids,
+          gain
+        });
+        break;
+      }
+    }
+
+    return candidates;
+  }
+
+  async function startCpuBackgroundThinking() {
+    if (!isCpuMode() || isGameOver || isCpuThinking || isChecking) return;
+    if (isCpuTurn()) return;
+
+    cpuPrecomputedCandidates = [];
+
+    try {
+      if (gameMode === MODE_CPU_ULTIMATE) {
+        cpuPrecomputedCandidates = await generateCpuCandidatesEasy(
+          14,
+          120,
+          5,
+          8
+        );
+      } else if (gameMode === MODE_CPU_HARD) {
+        cpuPrecomputedCandidates = await generateCpuCandidatesEasy(
+          10,
+          80,
+          5,
+          7
+        );
+      } else if (gameMode === MODE_CPU_NORMAL) {
+        cpuPrecomputedCandidates = await generateCpuCandidatesEasy(
+          7,
+          60,
+          4,
+          6
+        );
+      } else {
+        cpuPrecomputedCandidates = await generateCpuCandidatesEasy(
+          5,
+          40,
+          3,
+          5
+        );
+      }
+    } catch (e) {
+      // ignore background errors
+    }
+  }
+
+  async function playCpuTurnEasy() {
+    if (!isCpuTurn() || isCpuThinking || isChecking || isGameOver) return;
+    isCpuThinking = true;
+
+    selectedIds = [];
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    resetLiveStatus();
+    messageEl.textContent = "CPU is thinking...";
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    let candidates = [];
+    if (cpuPrecomputedCandidates && cpuPrecomputedCandidates.length > 0) {
+      const usableIds = new Set(getUsableTilesForCpu().map((t) => t.id));
+      candidates = cpuPrecomputedCandidates.filter((c) =>
+        c.tileIds.every((id) => usableIds.has(id))
+      );
+    }
+
+    if (!candidates.length) {
+      candidates = await generateCpuCandidatesEasy(3, 20, 3, 5);
+    }
+
+    cpuPrecomputedCandidates = [];
+
+    // Ultimate では極力 Pass を避けるため、候補が空ならもう一度だけ緩め条件で探索
+    if (!candidates.length && !isGameOver && gameMode === MODE_CPU_ULTIMATE) {
+      const extraCandidates = await generateCpuCandidatesEasy(
+        12,
+        140,
+        3,
+        8
+      );
+      if (extraCandidates && extraCandidates.length) {
+        candidates = extraCandidates;
+      }
+    }
+
+    if (!candidates.length || isGameOver) {
+      isCpuSubmitting = true;
+      handlePass();
+      isCpuSubmitting = false;
+      isCpuThinking = false;
+      return;
+    }
+
+    // Choose move based on CPU personality
+    const choice = pickCandidateByPersonality(candidates);
+    if (!choice) {
+      isCpuSubmitting = true;
+      handlePass();
+      isCpuSubmitting = false;
+      isCpuThinking = false;
+      return;
+    }
+
+    selectedIds = choice.tileIds.slice();
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    isCpuSubmitting = true;
+    await submitWord();
+    isCpuSubmitting = false;
+    isCpuThinking = false;
+  }
+
+  async function playCpuTurnNormal() {
+    if (!isCpuTurn() || isCpuThinking || isChecking || isGameOver) return;
+    isCpuThinking = true;
+
+    selectedIds = [];
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+    resetLiveStatus();
+    messageEl.textContent = "CPU is thinking...";
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    let candidates = [];
+    if (cpuPrecomputedCandidates && cpuPrecomputedCandidates.length > 0) {
+      const usableIds = new Set(getUsableTilesForCpu().map((t) => t.id));
+      candidates = cpuPrecomputedCandidates.filter((c) =>
+        c.tileIds.every((id) => usableIds.has(id))
+      );
+    }
+
+    if (!candidates.length) {
+      const maxCandidates =
+        gameMode === MODE_CPU_ULTIMATE
+          ? 14
+          : gameMode === MODE_CPU_HARD
+          ? 10
+          : 7;
+      const maxTries =
+        gameMode === MODE_CPU_ULTIMATE
+          ? 120
+          : gameMode === MODE_CPU_HARD
+          ? 80
+          : 40;
+      const minLen =
+        gameMode === MODE_CPU_ULTIMATE
+          ? 5
+          : gameMode === MODE_CPU_HARD
+          ? 5
+          : 4;
+      const maxLen =
+        gameMode === MODE_CPU_ULTIMATE
+          ? 8
+          : gameMode === MODE_CPU_HARD
+          ? 7
+          : 6;
+      candidates = await generateCpuCandidatesEasy(
+        maxCandidates,
+        maxTries,
+        minLen,
+        maxLen
+      );
+    }
+
+    cpuPrecomputedCandidates = [];
+
+    if (!candidates.length || isGameOver) {
+      isCpuSubmitting = true;
+      handlePass();
+      isCpuSubmitting = false;
+      isCpuThinking = false;
+      return;
+    }
+
+    // Choose move based on CPU personality
+    const choice = pickCandidateByPersonality(candidates);
+    if (!choice) {
+      isCpuSubmitting = true;
+      handlePass();
+      isCpuSubmitting = false;
+      isCpuThinking = false;
+      return;
+    }
+
+    selectedIds = choice.tileIds.slice();
+    renderBoard(boardEl, true);
+    updateSelectedUI();
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    isCpuSubmitting = true;
+    await submitWord();
+    isCpuSubmitting = false;
+    isCpuThinking = false;
+  }
+
+  function maybeStartCpuTurn() {
+    if (!isCpuTurn()) return;
+    if (isCpuThinking || isChecking || isGameOver) return;
+    setTimeout(() => {
+      if (
+        gameMode === MODE_CPU_NORMAL ||
+        gameMode === MODE_CPU_HARD ||
+        gameMode === MODE_CPU_ULTIMATE
+      ) {
+        playCpuTurnNormal();
+      } else {
+        playCpuTurnEasy();
+      }
+    }, 600);
+  }
+
+  // Event listeners
+  startBtn.addEventListener("click", startGame);
+  backToStartBtn.addEventListener("click", backToStart);
+  replayBtn.addEventListener("click", startGame);
+  submitBtn.addEventListener("click", submitWord);
+  undoBtn.addEventListener("click", undoSelection);
+  clearBtn.addEventListener("click", clearSelection);
+  passBtn.addEventListener("click", handlePass);
+
+  // Auto-start when launched from the online lobby
+  (function autoStartIfOnline() {
+    try {
+      const roomCode = localStorage.getItem("vg_room_code");
+      const role = localStorage.getItem("vg_role");
+      const token = localStorage.getItem("vg_player_token");
+      if (roomCode && role && token) {
+        startGame();
+      }
+    } catch (e) {
+      console.warn("autoStartIfOnline error", e);
+    }
+  })();
+});
+  </script>
+
+  <!-- ここからオンライン機能（Supabase）。オフライン起動時は何もしない -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // ==== Supabase client init ====
     const { createClient } = supabase;
 
     const SUPABASE_URL = "https://asilqsvfeedeirxadnjb.supabase.co";
     const SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzaWxxc3ZmZWVkZWlyeGFkbmpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzkyMzgsImV4cCI6MjA3ODgxNTIzOH0.wZByhkNnaDBZ0tvmLWVHcpWCSgG6fBkPAVktZTBQtpo";
 
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // VocaGrid 用 Supabase クライアント
+    const vgSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ==== UI helpers ====
-    function setText(id, html) {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = html;
-    }
+    document.addEventListener("DOMContentLoaded", async () => {
+      const roomCode = localStorage.getItem("vg_room_code");
+      const role = localStorage.getItem("vg_role");
+      const token = localStorage.getItem("vg_player_token");
 
-    function appendDebug(msg) {
-      const el = document.getElementById("online-debug");
-      if (!el) return;
-      const now = new Date().toLocaleTimeString();
-      el.textContent = `[${now}] ${msg}\n` + el.textContent;
-    }
-
-    function generateRoomCode(length = 6) {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let result = "";
-      for (let i = 0; i < length; i++) {
-        result += chars[Math.floor(Math.random() * chars.length)];
-      }
-      return result;
-    }
-
-    function generateToken(length = 32) {
-      const chars =
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let result = "";
-      for (let i = 0; i < length; i++) {
-        result += chars[Math.floor(Math.random() * chars.length)];
-      }
-      return result;
-    }
-
-    // ==== Create room (host) → go straight to online-game.html ====
-    async function createRoom() {
-      setText("create-room-result", "Creating room...");
-      appendDebug("Creating room...");
-
-      const roomCode = generateRoomCode();
-      const hostToken = generateToken();
-
-      const initialState = {
-        phase: "lobby",
-        createdAt: new Date().toISOString(),
-      };
-
-      const { data, error } = await supabaseClient
-        .from("rooms")
-        .insert({
-          room_code: roomCode,
-          state: initialState,
-          status: "waiting",
-          host_token: hostToken,
-          current_turn: "host",
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error(error);
-        setText(
-          "create-room-result",
-          `<span style="color:#f97373;">Failed to create room: ${error.message}</span>`
-        );
-        appendDebug("Create room ERROR: " + error.message);
+      // オフラインで index.html を直接開いた場合は何もしない
+      if (!roomCode || !role || !token) {
         return;
       }
 
-      setText(
-        "create-room-result",
-        `Room created! Share this code with your friend:<br/><span class="online-code">${data.room_code}</span>`
-      );
-      appendDebug(`Room created with code=${data.room_code}`);
+      try {
+        const { data, error } = await vgSupabase
+          .from("rooms")
+          .select("*")
+          .eq("room_code", roomCode)
+          .single();
 
-      // Save session info and jump to online game screen
-      localStorage.setItem("vg_room_code", data.room_code);
-      localStorage.setItem("vg_role", "host");
-      localStorage.setItem("vg_player_token", hostToken);
+        if (error || !data) {
+          console.error("Supabase room fetch error", error);
+          return;
+        }
 
-      window.location.href = "online-game.html";
-    }
+        // 右上にオンラインバッジを出すだけ（レイアウトへの影響は最小限）
+        const bar = document.createElement("div");
+        bar.textContent = `Online: ${role.toUpperCase()} | Room ${roomCode}`;
+        bar.style.position = "fixed";
+        bar.style.top = "8px";
+        bar.style.right = "8px";
+        bar.style.padding = "4px 8px";
+        bar.style.borderRadius = "6px";
+        bar.style.background = "rgba(0, 0, 0, 0.45)";
+        bar.style.color = "#f9fafb";
+        bar.style.fontSize = "11px";
+        bar.style.fontWeight = "500";
+        bar.style.zIndex = "9999";
+        bar.style.pointerEvents = "none";
+        document.body.appendChild(bar);
 
-    // ==== Join room (guest) → go straight to online-game.html ====
-    async function joinRoom() {
-      const input = document.getElementById("join-room-code");
-      const codeRaw = (input?.value || "").trim().toUpperCase();
+        // 後で同期ロジックを追加するための情報
+        window.vgOnline = {
+          supabase: vgSupabase,
+          room: data,
+          role,
+          token,
+          roomCode
+        };
 
-      if (!codeRaw) {
-        setText("join-room-result", "Please enter a room code.");
-        return;
+        console.log("VocaGrid online room loaded", window.vgOnline);
+      } catch (e) {
+        console.error("Supabase online init error", e);
       }
-
-      setText("join-room-result", "Joining room...");
-      appendDebug("Joining room with code=" + codeRaw);
-
-      const { data, error } = await supabaseClient
-        .from("rooms")
-        .select("*")
-        .eq("room_code", codeRaw)
-        .single();
-
-      if (error || !data) {
-        setText(
-          "join-room-result",
-          `<span style="color:#f97373;">Room not found or error.</span>`
-        );
-        appendDebug(
-          "Join room ERROR: " + (error ? error.message : "not found")
-        );
-        return;
-      }
-
-      if (data.status !== "waiting") {
-        setText(
-          "join-room-result",
-          `<span style="color:#f97373;">Room is not waiting (status: ${data.status}).</span>`
-        );
-        appendDebug("Join room failed: status=" + data.status);
-        return;
-      }
-
-      const guestToken = generateToken();
-
-      const { data: updated, error: updateError } = await supabaseClient
-        .from("rooms")
-        .update({
-          guest_token: guestToken,
-          status: "playing",
-        })
-        .eq("id", data.id)
-        .select()
-        .single();
-
-      if (updateError || !updated) {
-        setText(
-          "join-room-result",
-          `<span style="color:#f97373;">Failed to join room.</span>`
-        );
-        appendDebug(
-          "Join room UPDATE ERROR: " +
-            (updateError ? updateError.message : "unknown")
-        );
-        return;
-      }
-
-      setText(
-        "join-room-result",
-        `Joined room! You are the guest of:<br/><span class="online-code">${updated.room_code}</span>`
-      );
-      appendDebug("Joined room successfully: id=" + updated.id);
-
-      // Save session info and jump to online game screen
-      localStorage.setItem("vg_room_code", updated.room_code);
-      localStorage.setItem("vg_role", "guest");
-      localStorage.setItem("vg_player_token", guestToken);
-
-      window.location.href = "online-game.html";
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const btnCreate = document.getElementById("btn-create-room");
-      const btnJoin = document.getElementById("btn-join-room");
-
-      btnCreate?.addEventListener("click", () => {
-        createRoom().catch((e) => {
-          console.error(e);
-          appendDebug("Create room EXCEPTION: " + e.message);
-        });
-      });
-
-      btnJoin?.addEventListener("click", () => {
-        joinRoom().catch((e) => {
-          console.error(e);
-          appendDebug("Join room EXCEPTION: " + e.message);
-        });
-      });
-
-      appendDebug("VocaGrid Online lobby initialized.");
     });
   </script>
 </body>
