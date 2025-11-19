@@ -6,12 +6,6 @@
   <title>VOCAGRID – Online Dictionary + Corpus Board</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="game.css" />
-    <style>
-      /* Hide CPU Info panel on online game screen only */
-      .panel.cpu-info {
-        display: none;
-      }
-    </style>
 </head>
 <body>
   <!-- Start Screen -->
@@ -231,6 +225,180 @@ window.addEventListener("DOMContentLoaded", function () {
   let history = [];
   let isChecking = false; // to prevent double submit
   let draggedSelectedIndex = null; // index in selectedIds for drag & drop
+
+  // --- Online match state (Supabase-based remote play) ---
+  let isOnlineMatch = false;
+  let onlineRole = null; // 'host' or 'guest'
+  let onlineRoomCode = null;
+  let onlineRoomId = null;
+  let onlineToken = null;
+  let onlineSupabase = null;
+  let onlineSyncVersion = 0;
+
+  function getMyOnlinePlayerNumber() {
+    if (!isOnlineMatch || !onlineRole) return null;
+    return onlineRole === "host" ? 1 : 2;
+  }
+
+  function isMyTurnOnline() {
+    const me = getMyOnlinePlayerNumber();
+    if (!isOnlineMatch || me === null) return false;
+    return currentPlayer === me;
+  }
+
+  function serializeOnlineState() {
+    try {
+      return {
+        version: (onlineSyncVersion || 0) + 1,
+        tiles: tiles.map((t) => ({
+          id: t.id,
+          row: t.row,
+          col: t.col,
+          letter: t.letter,
+          owner: t.owner,
+          lockOwner: t.lockOwner || null
+        })),
+        currentPlayer,
+        points: { 1: points[1], 2: points[2] },
+        history: history.slice(0, 100),
+        gameMode,
+        isGameOver,
+        consecutivePasses,
+        usedWords: Array.from(usedWords || [])
+      };
+    } catch (e) {
+      console.warn("serializeOnlineState error", e);
+      return null;
+    }
+  }
+
+  function applyOnlineState(state) {
+    if (!state) return;
+    try {
+      if (state.version && (!onlineSyncVersion || state.version > onlineSyncVersion)) {
+        onlineSyncVersion = state.version;
+      }
+
+      if (Array.isArray(state.tiles) && state.tiles.length) {
+        tiles = state.tiles.map((t) => ({
+          id: t.id,
+          row: t.row,
+          col: t.col,
+          letter: t.letter,
+          owner: t.owner,
+          lockOwner: t.lockOwner || null
+        }));
+      }
+      if (state.points && typeof state.points === "object") {
+        points[1] = state.points[1] || 0;
+        points[2] = state.points[2] || 0;
+      }
+      if (typeof state.currentPlayer === "number") {
+        currentPlayer = state.currentPlayer;
+      }
+      if (Array.isArray(state.history)) {
+        history = state.history.slice(0, 100);
+      }
+      if (typeof state.isGameOver === "boolean") {
+        isGameOver = state.isGameOver;
+      }
+      if (typeof state.consecutivePasses === "number") {
+        consecutivePasses = state.consecutivePasses;
+      }
+      if (Array.isArray(state.usedWords)) {
+        usedWords = new Set(state.usedWords);
+      }
+
+      // Re-render UI to reflect online state
+      renderBoard(boardEl, true);
+      updateSelectedUI();
+      updateScoresUI();
+      updateTurnUI();
+      renderHistory();
+      resetMeaningBoxes();
+      resetLiveStatus();
+    } catch (e) {
+      console.warn("applyOnlineState error", e);
+    }
+  }
+
+  async function pushOnlineState() {
+    if (!isOnlineMatch || !onlineSupabase || !onlineRoomId) return;
+    const state = serializeOnlineState();
+    if (!state) return;
+    try {
+      const { data, error } = await onlineSupabase
+        .from("rooms")
+        .update({ state })
+        .eq("id", onlineRoomId)
+        .select()
+        .single();
+      if (error) {
+        console.warn("pushOnlineState error", error);
+        return;
+      }
+      if (data && data.state && data.state.version) {
+        onlineSyncVersion = data.state.version;
+      }
+    } catch (e) {
+      console.warn("pushOnlineState exception", e);
+    }
+  }
+
+  function startOnlinePolling() {
+    if (!isOnlineMatch || !onlineSupabase || !onlineRoomId) return;
+    if (window.vgOnlinePoll) {
+      clearInterval(window.vgOnlinePoll);
+    }
+    window.vgOnlinePoll = setInterval(async () => {
+      try {
+        const { data, error } = await onlineSupabase
+          .from("rooms")
+          .select("state")
+          .eq("id", onlineRoomId)
+          .single();
+        if (error) {
+          return;
+        }
+        if (data && data.state) {
+          const incoming = data.state;
+          if (incoming.version && (!onlineSyncVersion || incoming.version > onlineSyncVersion)) {
+            applyOnlineState(incoming);
+          }
+        }
+      } catch (e) {
+        console.warn("online polling error", e);
+      }
+    }, 1500);
+  }
+
+  // This will be called from the Supabase bootstrap script at the bottom of the file
+  window.vgEnableOnlineSession = async function ({ supabase, room, role, token, roomCode }) {
+    try {
+      isOnlineMatch = true;
+      onlineSupabase = supabase;
+      onlineRole = role;
+      onlineRoomCode = roomCode;
+      onlineRoomId = room.id;
+      onlineToken = token;
+
+      // Force PvP mode in online matches
+      gameMode = MODE_PVP;
+      updateDifficultyVisibility();
+
+      if (room.state && room.state.tiles && room.state.tiles.length) {
+        applyOnlineState(room.state);
+      } else if (role === "host") {
+        // Host: current local board (autoStartIfOnline) becomes the initial state
+        await pushOnlineState();
+      }
+
+      startOnlinePolling();
+    } catch (e) {
+      console.warn("vgEnableOnlineSession error", e);
+    }
+  };
+
   // CPU personality
   const PERSONALITY_AGGRESSIVE = "aggressive";
   const PERSONALITY_DEFENSIVE  = "defensive";
@@ -780,85 +948,7 @@ window.addEventListener("DOMContentLoaded", function () {
     resetLiveStatus();
   }
 
-  
-  function getSerializableOnlineState() {
-    try {
-      return {
-        tiles: tiles.map((t) => ({
-          id: t.id,
-          row: t.row,
-          col: t.col,
-          letter: t.letter,
-          owner: t.owner,
-          lockOwner: t.lockOwner
-        })),
-        currentPlayer,
-        selectedIds: Array.isArray(selectedIds) ? selectedIds.slice() : [],
-        points: { 1: points[1], 2: points[2] },
-        history: Array.isArray(history) ? history.slice() : [],
-        usedWords: Array.from(usedWords || []),
-        consecutivePasses,
-        gameMode,
-        isGameOver
-      };
-    } catch (e) {
-      console.warn("getSerializableOnlineState error", e);
-      return null;
-    }
-  }
-
-  function restoreOnlineStateFromObject(state) {
-    if (!state) return;
-    try {
-      if (Array.isArray(state.tiles) && state.tiles.length) {
-        tiles = state.tiles.map((t) => ({
-          id: t.id,
-          row: t.row,
-          col: t.col,
-          letter: t.letter,
-          owner: t.owner,
-          lockOwner: t.lockOwner
-        }));
-      }
-      currentPlayer = state.currentPlayer || 1;
-      selectedIds = Array.isArray(state.selectedIds) ? state.selectedIds.slice() : [];
-      if (state.points && typeof state.points === "object") {
-        points[1] = state.points[1] || 0;
-        points[2] = state.points[2] || 0;
-      }
-      history = Array.isArray(state.history) ? state.history.slice() : [];
-      if (state.usedWords) {
-        usedWords = new Set(state.usedWords);
-      } else {
-        usedWords = usedWords || new Set();
-      }
-      if (typeof state.consecutivePasses === "number") {
-        consecutivePasses = state.consecutivePasses;
-      }
-      if (state.gameMode) {
-        gameMode = state.gameMode;
-      }
-      isGameOver = !!state.isGameOver;
-
-      renderBoard(boardEl, false);
-      updateSelectedUI();
-      updateScoresUI();
-      updateTurnUI();
-      renderHistory();
-      resetMeaningBoxes();
-      resetLiveStatus();
-    } catch (e) {
-      console.warn("restoreOnlineStateFromObject error", e);
-    }
-  }
-
-  function showGameUIForOnlineResume() {
-    startScreen.classList.add("hidden");
-    endScreen.classList.add("hidden");
-    gameUI.classList.remove("hidden");
-  }
-
-function startGame() {
+  function startGame() {
     // Decide game mode from start screen radios
     gameMode = MODE_PVP;
 
@@ -905,28 +995,9 @@ function startGame() {
 
 
   function backToStart() {
-    const shouldSave = confirm("Do you want to save the current online game before returning to the menu?");
-    try {
-      if (shouldSave) {
-        const state = getSerializableOnlineState();
-        if (state) {
-          localStorage.setItem("vg_online_saved_state", JSON.stringify(state));
-          localStorage.setItem("vg_saved_online_game", "1");
-        }
-        // We intentionally keep vg_room_code / vg_role / vg_player_token
-        // so that online-game.html can resume the session.
-      } else {
-        // Clear any saved online game info.
-        localStorage.removeItem("vg_online_saved_state");
-        localStorage.removeItem("vg_saved_online_game");
-        localStorage.removeItem("vg_room_code");
-        localStorage.removeItem("vg_role");
-        localStorage.removeItem("vg_player_token");
-      }
-    } catch (e) {
-      console.warn("Failed to persist online game state", e);
-    }
-    window.location.href = "index.html";
+    gameUI.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
   }
 
   function handleTileClick(e) {
@@ -934,6 +1005,10 @@ function startGame() {
     if (!id) return;
     const tile = tiles.find((t) => t.id === id);
     if (!tile) return;
+    if (isOnlineMatch && !isMyTurnOnline()) {
+      messageEl.textContent = "Waiting for opponent's move...";
+      return;
+    }
     if (tile.lockOwner && tile.lockOwner !== currentPlayer) {
       messageEl.textContent = "You cannot use an opponent's locked tile.";
       return;
@@ -968,6 +1043,10 @@ function startGame() {
 
   async function submitWord() {
     if (isChecking) return;
+    if (isOnlineMatch && !isMyTurnOnline()) {
+      messageEl.textContent = "Waiting for opponent's move...";
+      return;
+    }
 
     const word = buildCurrentWord();
     let cpuMoveStats = null;
@@ -1060,6 +1139,10 @@ function startGame() {
 
 
   function handlePass() {
+    if (isOnlineMatch && !isMyTurnOnline()) {
+      messageEl.textContent = "Waiting for opponent's move...";
+      return;
+    }
     // Record the pass in history
     history.unshift({
       player: currentPlayer,
@@ -1084,6 +1167,11 @@ function startGame() {
     currentPlayer = currentPlayer === 1 ? 2 : 1;
     updateTurnUI();
 
+    if (isOnlineMatch) {
+      pushOnlineState();
+      return;
+    }
+
     if (isCpuMode()) {
       if (isCpuTurn()) {
         maybeStartCpuTurn();
@@ -1095,6 +1183,9 @@ function startGame() {
 
   function endGame() {
     isGameOver = true;
+    if (isOnlineMatch) {
+      pushOnlineState();
+    }
     gameUI.classList.add("hidden");
     endScreen.classList.remove("hidden");
 
@@ -1966,19 +2057,7 @@ function startGame() {
       const role = localStorage.getItem("vg_role");
       const token = localStorage.getItem("vg_player_token");
       if (roomCode && role && token) {
-        const savedRaw = localStorage.getItem("vg_online_saved_state");
-        if (savedRaw) {
-          try {
-            const saved = JSON.parse(savedRaw);
-            showGameUIForOnlineResume();
-            restoreOnlineStateFromObject(saved);
-          } catch (err) {
-            console.warn("Failed to restore saved online game state", err);
-            startGame();
-          }
-        } else {
-          startGame();
-        }
+        startGame();
       }
     } catch (e) {
       console.warn("autoStartIfOnline error", e);
@@ -2037,7 +2116,7 @@ function startGame() {
         bar.style.pointerEvents = "none";
         document.body.appendChild(bar);
 
-        // 後で同期ロジックを追加するための情報
+        // オンライン同期のための情報
         window.vgOnline = {
           supabase: vgSupabase,
           room: data,
@@ -2045,6 +2124,10 @@ function startGame() {
           token,
           roomCode
         };
+
+        if (typeof window.vgEnableOnlineSession === "function") {
+          window.vgEnableOnlineSession(window.vgOnline);
+        }
 
         console.log("VocaGrid online room loaded", window.vgOnline);
       } catch (e) {
