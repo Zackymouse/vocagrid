@@ -55,6 +55,7 @@
     </div>
 
     <button id="onlineBtn" class="btn ghost">Online</button>
+    <button id="continueBtn" class="btn ghost hidden">Continue</button>
     <button id="startBtn" class="btn primary">Start</button>
   </div>
 
@@ -317,6 +318,7 @@ window.addEventListener("DOMContentLoaded", function () {
   const clearBtn = document.getElementById("clearBtn");
   const replayBtn = document.getElementById("replayBtn");
   const passBtn = document.getElementById("passBtn")
+  const continueBtn = document.getElementById("continueBtn");
   const onlineBtn = document.getElementById("onlineBtn");
   const onlineScreen = document.getElementById("onlineScreen");
   const onlineBackBtn = document.getElementById("onlineBackBtn");;
@@ -1846,6 +1848,35 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
     }, 600);
   }
 
+
+  function hasSavedOnlineGame() {
+    try {
+      return (
+        localStorage.getItem("vg_saved_online_game") === "1" &&
+        localStorage.getItem("vg_room_code") &&
+        localStorage.getItem("vg_role") &&
+        localStorage.getItem("vg_player_token")
+      );
+    } catch (e) {
+      console.warn("Failed to read saved online game info", e);
+      return false;
+    }
+  }
+
+  function updateContinueVisibility() {
+    if (!continueBtn) return;
+    if (hasSavedOnlineGame()) {
+      continueBtn.classList.remove("hidden");
+    } else {
+      continueBtn.classList.add("hidden");
+    }
+  }
+
+  function handleContinueClick() {
+    // Resume the saved online game session.
+    window.location.href = "online-game.html";
+  }
+
 // Event listeners
   startBtn.addEventListener("click", startGame);
   backToStartBtn.addEventListener("click", backToStart);
@@ -1856,6 +1887,11 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
   passBtn.addEventListener("click", handlePass);
   if (onlineBtn) {
     onlineBtn.addEventListener("click", showOnlineScreen);
+  }
+  if (continueBtn) {
+    continueBtn.addEventListener("click", handleContinueClick);
+    // Update visibility based on saved online game info.
+    updateContinueVisibility();
   }
   if (onlineBackBtn) {
     onlineBackBtn.addEventListener("click", closeOnlineScreen);
