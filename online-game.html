@@ -6,12 +6,6 @@
   <title>VOCAGRID – Online Dictionary + Corpus Board</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="game.css" />
-    <style>
-      /* Hide CPU Info panel on online game screen only */
-      .panel.cpu-info {
-        display: none;
-      }
-    </style>
 </head>
 <body>
   <!-- Start Screen -->
@@ -231,6 +225,10 @@ window.addEventListener("DOMContentLoaded", function () {
   let history = [];
   let isChecking = false; // to prevent double submit
   let draggedSelectedIndex = null; // index in selectedIds for drag & drop
+
+// Online match flags (remote play)
+let isOnlineMatch = false;
+let onlineRole = null; // "host" or "guest"
   // CPU personality
   const PERSONALITY_AGGRESSIVE = "aggressive";
   const PERSONALITY_DEFENSIVE  = "defensive";
@@ -780,85 +778,7 @@ window.addEventListener("DOMContentLoaded", function () {
     resetLiveStatus();
   }
 
-  
-  function getSerializableOnlineState() {
-    try {
-      return {
-        tiles: tiles.map((t) => ({
-          id: t.id,
-          row: t.row,
-          col: t.col,
-          letter: t.letter,
-          owner: t.owner,
-          lockOwner: t.lockOwner
-        })),
-        currentPlayer,
-        selectedIds: Array.isArray(selectedIds) ? selectedIds.slice() : [],
-        points: { 1: points[1], 2: points[2] },
-        history: Array.isArray(history) ? history.slice() : [],
-        usedWords: Array.from(usedWords || []),
-        consecutivePasses,
-        gameMode,
-        isGameOver
-      };
-    } catch (e) {
-      console.warn("getSerializableOnlineState error", e);
-      return null;
-    }
-  }
-
-  function restoreOnlineStateFromObject(state) {
-    if (!state) return;
-    try {
-      if (Array.isArray(state.tiles) && state.tiles.length) {
-        tiles = state.tiles.map((t) => ({
-          id: t.id,
-          row: t.row,
-          col: t.col,
-          letter: t.letter,
-          owner: t.owner,
-          lockOwner: t.lockOwner
-        }));
-      }
-      currentPlayer = state.currentPlayer || 1;
-      selectedIds = Array.isArray(state.selectedIds) ? state.selectedIds.slice() : [];
-      if (state.points && typeof state.points === "object") {
-        points[1] = state.points[1] || 0;
-        points[2] = state.points[2] || 0;
-      }
-      history = Array.isArray(state.history) ? state.history.slice() : [];
-      if (state.usedWords) {
-        usedWords = new Set(state.usedWords);
-      } else {
-        usedWords = usedWords || new Set();
-      }
-      if (typeof state.consecutivePasses === "number") {
-        consecutivePasses = state.consecutivePasses;
-      }
-      if (state.gameMode) {
-        gameMode = state.gameMode;
-      }
-      isGameOver = !!state.isGameOver;
-
-      renderBoard(boardEl, false);
-      updateSelectedUI();
-      updateScoresUI();
-      updateTurnUI();
-      renderHistory();
-      resetMeaningBoxes();
-      resetLiveStatus();
-    } catch (e) {
-      console.warn("restoreOnlineStateFromObject error", e);
-    }
-  }
-
-  function showGameUIForOnlineResume() {
-    startScreen.classList.add("hidden");
-    endScreen.classList.add("hidden");
-    gameUI.classList.remove("hidden");
-  }
-
-function startGame() {
+  function startGame() {
     // Decide game mode from start screen radios
     gameMode = MODE_PVP;
 
@@ -905,31 +825,30 @@ function startGame() {
 
 
   function backToStart() {
-    const shouldSave = confirm("Do you want to save the current online game before returning to the menu?");
-    try {
-      if (shouldSave) {
-        const state = getSerializableOnlineState();
-        if (state) {
-          localStorage.setItem("vg_online_saved_state", JSON.stringify(state));
-          localStorage.setItem("vg_saved_online_game", "1");
-        }
-        // We intentionally keep vg_room_code / vg_role / vg_player_token
-        // so that online-game.html can resume the session.
-      } else {
-        // Clear any saved online game info.
-        localStorage.removeItem("vg_online_saved_state");
-        localStorage.removeItem("vg_saved_online_game");
-        localStorage.removeItem("vg_room_code");
-        localStorage.removeItem("vg_role");
-        localStorage.removeItem("vg_player_token");
-      }
-    } catch (e) {
-      console.warn("Failed to persist online game state", e);
-    }
-    window.location.href = "index.html";
+    gameUI.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
   }
 
-  function handleTileClick(e) {
+  
+
+function getMyOnlinePlayerNumber() {
+  if (!isOnlineMatch || !onlineRole) return null;
+  return onlineRole === "host" ? 1 : 2;
+}
+
+function isMyTurnOnline() {
+  const my = getMyOnlinePlayerNumber();
+  if (!my) return true; // offline or role unknown -> allow moves
+  return currentPlayer === my;
+}
+
+function handleTileClick(e) {
+if (isOnlineMatch && !isMyTurnOnline()) {
+  messageEl.textContent = "Waiting for opponent's move...";
+  return;
+}
+
     const id = e.currentTarget.dataset.id;
     if (!id) return;
     const tile = tiles.find((t) => t.id === id);
@@ -967,6 +886,11 @@ function startGame() {
   }
 
   async function submitWord() {
+if (isOnlineMatch && !isMyTurnOnline()) {
+  messageEl.textContent = "Waiting for opponent's move...";
+  return;
+}
+
     if (isChecking) return;
 
     const word = buildCurrentWord();
@@ -1060,6 +984,11 @@ function startGame() {
 
 
   function handlePass() {
+if (isOnlineMatch && !isMyTurnOnline()) {
+  messageEl.textContent = "Waiting for opponent's move...";
+  return;
+}
+
     // Record the pass in history
     history.unshift({
       player: currentPlayer,
@@ -1966,19 +1895,9 @@ function startGame() {
       const role = localStorage.getItem("vg_role");
       const token = localStorage.getItem("vg_player_token");
       if (roomCode && role && token) {
-        const savedRaw = localStorage.getItem("vg_online_saved_state");
-        if (savedRaw) {
-          try {
-            const saved = JSON.parse(savedRaw);
-            showGameUIForOnlineResume();
-            restoreOnlineStateFromObject(saved);
-          } catch (err) {
-            console.warn("Failed to restore saved online game state", err);
-            startGame();
-          }
-        } else {
-          startGame();
-        }
+        onlineRole = role;
+        isOnlineMatch = true;
+        startGame();
       }
     } catch (e) {
       console.warn("autoStartIfOnline error", e);
