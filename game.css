@@ -1065,6 +1065,12 @@ h1 {
   margin-top: 20px;
 }
 
+.screen.start #continueBtn {
+  float: right;
+  clear: right;
+  margin-top: 8px;
+}
+
 /* Clear floats in start screen to keep layout stable */
 .screen.start::after {
   content: "";
