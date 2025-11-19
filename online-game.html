@@ -828,7 +828,22 @@ window.addEventListener("DOMContentLoaded", function () {
 
   function backToStart() {
     const shouldSave = confirm("Do you want to save the current online game before returning to the menu?");
-    // TODO: In the next step, we will actually save the game state when the player chooses to save.
+    try {
+      if (shouldSave) {
+        // Mark that there is a saved online game session.
+        localStorage.setItem("vg_saved_online_game", "1");
+        // We intentionally keep vg_room_code / vg_role / vg_player_token
+        // so that online-game.html can resume the session.
+      } else {
+        // Clear any saved online game info.
+        localStorage.removeItem("vg_saved_online_game");
+        localStorage.removeItem("vg_room_code");
+        localStorage.removeItem("vg_role");
+        localStorage.removeItem("vg_player_token");
+      }
+    } catch (e) {
+      console.warn("Failed to persist online game state", e);
+    }
     window.location.href = "index.html";
   }
 
