@@ -1071,3 +1071,9 @@ h1 {
   display: block;
   clear: both;
 }
+
+
+/* === Online remote mode specific (hide CPU info panel) v9.3+ === */
+body.online-remote .panel.cpu-info {
+  display: none;
+}
