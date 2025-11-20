@@ -231,6 +231,10 @@ window.addEventListener("DOMContentLoaded", function () {
   let history = [];
   let isChecking = false; // to prevent double submit
   let draggedSelectedIndex = null; // index in selectedIds for drag & drop
+// Online match flags (remote play)
+let isOnlineMatch = false;
+let onlineRole = null; // "host" or "guest"
+
   // CPU personality
   const PERSONALITY_AGGRESSIVE = "aggressive";
   const PERSONALITY_DEFENSIVE  = "defensive";
@@ -1966,7 +1970,9 @@ function startGame() {
       const role = localStorage.getItem("vg_role");
       const token = localStorage.getItem("vg_player_token");
       if (roomCode && role && token) {
-        const savedRaw = localStorage.getItem("vg_online_saved_state");
+        isOnlineMatch = true;
+        onlineRole = role;
+                const savedRaw = localStorage.getItem("vg_online_saved_state");
         if (savedRaw) {
           try {
             const saved = JSON.parse(savedRaw);
