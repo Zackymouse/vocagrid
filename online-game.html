@@ -2226,6 +2226,14 @@ function startGame() {
         if (window.vgStartOnlinePolling) {
           window.vgStartOnlinePolling();
         }
+
+
+        // If this is the host and the room has no state yet, push the initial board
+        if (role === "host" && (!data.state || !data.state.tiles || !data.state.tiles.length)) {
+          if (typeof syncOnlineStateToServer === "function") {
+            syncOnlineStateToServer("init");
+          }
+        }
       } catch (e) {
         console.error("Supabase online init error", e);
       }
