@@ -236,6 +236,7 @@ let isOnlineMatch = false;
 let onlineRole = null; // "host" or "guest"
 let onlineSyncIntervalId = null;
 let lastOnlineStateJson = null;
+let pendingInitialOnlineSync = false;
 
 
   // CPU personality
@@ -1030,6 +1031,11 @@ function startGame() {
     endScreen.classList.add("hidden");
     gameUI.classList.remove("hidden");
     resetGameState();
+
+    // If this is an online match, mark that we need to push the initial board
+    if (isOnlineMatch && !isCpuMode()) {
+      pendingInitialOnlineSync = true;
+    }
 
     // If CPU mode and it's the human's turn (Player 1), start background thinking
     if (isCpuMode() && currentPlayer === 1) {
@@ -2227,12 +2233,10 @@ function startGame() {
           window.vgStartOnlinePolling();
         }
 
-
-        // If this is the host and the room has no state yet, push the initial board
-        if (role === "host" && (!data.state || !data.state.tiles || !data.state.tiles.length)) {
-          if (typeof syncOnlineStateToServer === "function") {
-            syncOnlineStateToServer("init");
-          }
+        // If host already started the game, push the current board as the initial online state
+        if (role === "host" && pendingInitialOnlineSync && typeof syncOnlineStateToServer === "function") {
+          syncOnlineStateToServer("init");
+          pendingInitialOnlineSync = false;
         }
       } catch (e) {
         console.error("Supabase online init error", e);
