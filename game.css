@@ -439,14 +439,17 @@ h1 {
 }
 
 @media (max-width: 480px) {
+  .screen {
+    padding: 0 8px;
+  }
   #board {
-    grid-template-columns: repeat(5, 56px);
-    gap: 6px;
+    grid-template-columns: repeat(5, 52px);
+    gap: 4px;
   }
   .tile {
-    width: 56px !important;
-    height: 56px !important;
-    font-size: 24px !important;
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 22px !important;
   }
 }
 
