@@ -234,6 +234,9 @@ window.addEventListener("DOMContentLoaded", function () {
 // Online match flags (remote play)
 let isOnlineMatch = false;
 let onlineRole = null; // "host" or "guest"
+let onlineSyncIntervalId = null;
+let lastAppliedRemoteStateJson = null;
+
 
   // CPU personality
   const PERSONALITY_AGGRESSIVE = "aggressive";
@@ -856,6 +859,99 @@ let onlineRole = null; // "host" or "guest"
     }
   }
 
+
+  // --- Online synchronization helpers (remote play) ---
+  function isMyTurnOnline() {
+    if (!isOnlineMatch) return true;
+    if (!onlineRole) return true;
+    if (onlineRole === "host") {
+      return currentPlayer === 1;
+    }
+    if (onlineRole === "guest") {
+      return currentPlayer === 2;
+    }
+    return true;
+  }
+
+  function syncOnlineStateToServer(reason) {
+    try {
+      if (!isOnlineMatch) return;
+      if (onlineRole !== "host") return;
+      if (!window.vgOnline || !window.vgOnline.supabase || !window.vgOnline.room) return;
+
+      const state = getSerializableOnlineState();
+      if (!state) return;
+
+      const supa = window.vgOnline.supabase;
+      const roomId = window.vgOnline.room.id;
+      const currentTurnRole = currentPlayer === 1 ? "host" : "guest";
+
+      lastAppliedRemoteStateJson = JSON.stringify(state);
+
+      supa
+        .from("rooms")
+        .update({
+          state,
+          current_turn: currentTurnRole
+        })
+        .eq("id", roomId)
+        .then(({ error }) => {
+          if (error) {
+            console.warn("syncOnlineStateToServer error", error);
+          }
+        })
+        .catch((e) => {
+          console.warn("syncOnlineStateToServer exception", e);
+        });
+    } catch (e) {
+      console.warn("syncOnlineStateToServer outer exception", e);
+    }
+  }
+
+  function startOnlinePolling() {
+    try {
+      if (!isOnlineMatch) return;
+      if (onlineSyncIntervalId !== null) return;
+      if (!window.vgOnline || !window.vgOnline.supabase || !window.vgOnline.room) return;
+
+      const supa = window.vgOnline.supabase;
+      const roomId = window.vgOnline.room.id;
+
+      onlineSyncIntervalId = window.setInterval(() => {
+        supa
+          .from("rooms")
+          .select("state, current_turn")
+          .eq("id", roomId)
+          .single()
+          .then(({ data, error }) => {
+            if (error || !data || !data.state) return;
+
+            const json = JSON.stringify(data.state);
+            if (json === lastAppliedRemoteStateJson) {
+              return;
+            }
+            lastAppliedRemoteStateJson = json;
+
+            restoreOnlineStateFromObject(data.state);
+
+            if (data.current_turn === "host") {
+              currentPlayer = 1;
+            } else if (data.current_turn === "guest") {
+              currentPlayer = 2;
+            }
+            updateTurnUI();
+          })
+          .catch((e) => {
+            console.warn("online polling error", e);
+          });
+      }, 1200);
+    } catch (e) {
+      console.warn("startOnlinePolling exception", e);
+    }
+  }
+
+  window.vgStartOnlinePolling = startOnlinePolling;
+
   function showGameUIForOnlineResume() {
     startScreen.classList.add("hidden");
     endScreen.classList.add("hidden");
@@ -934,6 +1030,10 @@ function startGame() {
   }
 
   function handleTileClick(e) {
+    if (!isMyTurnOnline()) {
+      messageEl.textContent = "It's not your turn.";
+      return;
+    }
     const id = e.currentTarget.dataset.id;
     if (!id) return;
     const tile = tiles.find((t) => t.id === id);
@@ -954,6 +1054,9 @@ function startGame() {
   }
 
   function clearSelection() {
+    if (!isMyTurnOnline()) {
+      return;
+    }
     selectedIds = [];
     renderBoard(boardEl, true);
     updateSelectedUI();
@@ -962,6 +1065,9 @@ function startGame() {
   }
 
   function undoSelection() {
+    if (!isMyTurnOnline()) {
+      return;
+    }
     if (selectedIds.length === 0) return;
     selectedIds.pop();
     renderBoard(boardEl, true);
@@ -971,6 +1077,10 @@ function startGame() {
   }
 
   async function submitWord() {
+    if (!isMyTurnOnline()) {
+      messageEl.textContent = "It's not your turn.";
+      return;
+    }
     if (isChecking) return;
 
     const word = buildCurrentWord();
@@ -1060,10 +1170,18 @@ function startGame() {
         }
       }
     }
+
+    if (isOnlineMatch && !isCpuMode()) {
+      syncOnlineStateToServer("submit");
+    }
   }
 
 
   function handlePass() {
+    if (!isMyTurnOnline()) {
+      messageEl.textContent = "It's not your turn.";
+      return;
+    }
     // Record the pass in history
     history.unshift({
       player: currentPlayer,
@@ -1094,6 +1212,10 @@ function startGame() {
       } else {
         startCpuBackgroundThinking();
       }
+    }
+
+    if (isOnlineMatch && !isCpuMode()) {
+      syncOnlineStateToServer("pass");
     }
   }
 
@@ -1972,7 +2094,7 @@ function startGame() {
       if (roomCode && role && token) {
         isOnlineMatch = true;
         onlineRole = role;
-                const savedRaw = localStorage.getItem("vg_online_saved_state");
+        const savedRaw = localStorage.getItem("vg_online_saved_state");
         if (savedRaw) {
           try {
             const saved = JSON.parse(savedRaw);
@@ -1980,10 +2102,18 @@ function startGame() {
             restoreOnlineStateFromObject(saved);
           } catch (err) {
             console.warn("Failed to restore saved online game state", err);
-            startGame();
+            if (role === "host") {
+              startGame();
+            } else {
+              showGameUIForOnlineResume();
+            }
           }
         } else {
-          startGame();
+          if (role === "host") {
+            startGame();
+          } else {
+            showGameUIForOnlineResume();
+          }
         }
       }
     } catch (e) {
@@ -2053,6 +2183,10 @@ function startGame() {
         };
 
         console.log("VocaGrid online room loaded", window.vgOnline);
+
+        if (window.vgStartOnlinePolling) {
+          window.vgStartOnlinePolling();
+        }
       } catch (e) {
         console.error("Supabase online init error", e);
       }
