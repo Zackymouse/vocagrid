@@ -235,7 +235,7 @@ window.addEventListener("DOMContentLoaded", function () {
 let isOnlineMatch = false;
 let onlineRole = null; // "host" or "guest"
 let onlineSyncIntervalId = null;
-let lastAppliedRemoteStateJson = null;
+let lastOnlineStateJson = null;
 
 
   // CPU personality
@@ -852,7 +852,6 @@ let lastAppliedRemoteStateJson = null;
       updateScoresUI();
       updateTurnUI();
       renderHistory();
-      resetMeaningBoxes();
       resetLiveStatus();
     } catch (e) {
       console.warn("restoreOnlineStateFromObject error", e);
@@ -886,7 +885,7 @@ let lastAppliedRemoteStateJson = null;
       const roomId = window.vgOnline.room.id;
       const currentTurnRole = currentPlayer === 1 ? "host" : "guest";
 
-      lastAppliedRemoteStateJson = JSON.stringify(state);
+      lastOnlineStateJson = JSON.stringify(state);
 
       supa
         .from("rooms")
@@ -927,10 +926,10 @@ let lastAppliedRemoteStateJson = null;
             if (error || !data || !data.state) return;
 
             const json = JSON.stringify(data.state);
-            if (json === lastAppliedRemoteStateJson) {
+            if (json === lastOnlineStateJson) {
               return;
             }
-            lastAppliedRemoteStateJson = json;
+            lastOnlineStateJson = json;
 
             restoreOnlineStateFromObject(data.state);
 
@@ -944,12 +943,13 @@ let lastAppliedRemoteStateJson = null;
           .catch((e) => {
             console.warn("online polling error", e);
           });
-      }, 1200);
+      }, 1500);
     } catch (e) {
       console.warn("startOnlinePolling exception", e);
     }
   }
 
+  // Expose for Supabase bootstrap
   window.vgStartOnlinePolling = startOnlinePolling;
 
   function showGameUIForOnlineResume() {
@@ -2086,7 +2086,8 @@ function startGame() {
   passBtn.addEventListener("click", handlePass);
 
   // Auto-start when launched from the online lobby
-  (function autoStartIfOnline() {
+  
+(function autoStartIfOnline() {
     try {
       const roomCode = localStorage.getItem("vg_room_code");
       const role = localStorage.getItem("vg_role");
@@ -2120,6 +2121,7 @@ function startGame() {
       console.warn("autoStartIfOnline error", e);
     }
   })();
+
 });
   </script>
 
