@@ -959,6 +959,8 @@ let lastOnlineStateJson = null;
             }
             lastOnlineStateJson = json;
 
+            const wasGameOver = isGameOver;
+
             restoreOnlineStateFromObject(data.state);
 
             if (data.current_turn === "host") {
@@ -967,6 +969,10 @@ let lastOnlineStateJson = null;
               currentPlayer = 2;
             }
             updateTurnUI();
+
+            if (data.state && data.state.isGameOver && !wasGameOver) {
+              endGame();
+            }
           })
           .catch((e) => {
             console.warn("online polling error", e);
@@ -1313,6 +1319,9 @@ function startGame() {
 
       gameStatsEl.appendChild(lastP);
       gameStatsEl.appendChild(longestP);
+    }
+    if (isOnlineMatch && !isCpuMode()) {
+      syncOnlineStateToServer("end");
     }
   }
 
