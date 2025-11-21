@@ -726,6 +726,34 @@ let lastOnlineStateJson = null;
     applyMeaningToBox(player, info, word.toLowerCase());
   }
 
+
+  function refreshMeaningBoxesFromHistory() {
+    try {
+      if (!Array.isArray(history) || history.length === 0) return;
+
+      let lastP1 = null;
+      let lastP2 = null;
+
+      for (let i = 0; i < history.length; i++) {
+        const h = history[i];
+        if (!h || !h.word || h.word === "(PASS)") continue;
+        if (h.player === 1 && !lastP1) lastP1 = h;
+        if (h.player === 2 && !lastP2) lastP2 = h;
+        if (lastP1 && lastP2) break;
+      }
+
+      if (lastP1) {
+        updateMeaningBoxForPlayer(1, (lastP1.word || "").toLowerCase());
+      }
+      if (lastP2) {
+        updateMeaningBoxForPlayer(2, (lastP2.word || "").toLowerCase());
+      }
+    } catch (e) {
+      console.warn("refreshMeaningBoxesFromHistory error", e);
+    }
+  }
+
+
   function triggerLiveValidation() {
     if (!liveStatusText) return;
     const word = buildCurrentWord();
@@ -852,6 +880,7 @@ let lastOnlineStateJson = null;
       updateScoresUI();
       updateTurnUI();
       renderHistory();
+      refreshMeaningBoxesFromHistory();
       resetLiveStatus();
     } catch (e) {
       console.warn("restoreOnlineStateFromObject error", e);
@@ -875,7 +904,6 @@ let lastOnlineStateJson = null;
   function syncOnlineStateToServer(reason) {
     try {
       if (!isOnlineMatch) return;
-      if (onlineRole !== "host") return;
       if (!window.vgOnline || !window.vgOnline.supabase || !window.vgOnline.room) return;
 
       const state = getSerializableOnlineState();
