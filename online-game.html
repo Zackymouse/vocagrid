@@ -235,7 +235,9 @@ window.addEventListener("DOMContentLoaded", function () {
 let isOnlineMatch = false;
 let onlineRole = null; // "host" or "guest"
 let onlineSyncIntervalId = null;
-let lastOnlineStateJson = null;
+let lastAppliedRemoteStateJson = null;
+let pendingInitialOnlineSync = false;
+
 
 
   // CPU personality
@@ -726,34 +728,6 @@ let lastOnlineStateJson = null;
     applyMeaningToBox(player, info, word.toLowerCase());
   }
 
-
-  function refreshMeaningBoxesFromHistory() {
-    try {
-      if (!Array.isArray(history) || history.length === 0) return;
-
-      let lastP1 = null;
-      let lastP2 = null;
-
-      for (let i = 0; i < history.length; i++) {
-        const h = history[i];
-        if (!h || !h.word || h.word === "(PASS)") continue;
-        if (h.player === 1 && !lastP1) lastP1 = h;
-        if (h.player === 2 && !lastP2) lastP2 = h;
-        if (lastP1 && lastP2) break;
-      }
-
-      if (lastP1) {
-        updateMeaningBoxForPlayer(1, (lastP1.word || "").toLowerCase());
-      }
-      if (lastP2) {
-        updateMeaningBoxForPlayer(2, (lastP2.word || "").toLowerCase());
-      }
-    } catch (e) {
-      console.warn("refreshMeaningBoxesFromHistory error", e);
-    }
-  }
-
-
   function triggerLiveValidation() {
     if (!liveStatusText) return;
     const word = buildCurrentWord();
@@ -880,7 +854,7 @@ let lastOnlineStateJson = null;
       updateScoresUI();
       updateTurnUI();
       renderHistory();
-      refreshMeaningBoxesFromHistory();
+      resetMeaningBoxes();
       resetLiveStatus();
     } catch (e) {
       console.warn("restoreOnlineStateFromObject error", e);
@@ -904,6 +878,7 @@ let lastOnlineStateJson = null;
   function syncOnlineStateToServer(reason) {
     try {
       if (!isOnlineMatch) return;
+      if (onlineRole !== "host") return;
       if (!window.vgOnline || !window.vgOnline.supabase || !window.vgOnline.room) return;
 
       const state = getSerializableOnlineState();
@@ -913,7 +888,7 @@ let lastOnlineStateJson = null;
       const roomId = window.vgOnline.room.id;
       const currentTurnRole = currentPlayer === 1 ? "host" : "guest";
 
-      lastOnlineStateJson = JSON.stringify(state);
+      lastAppliedRemoteStateJson = JSON.stringify(state);
 
       supa
         .from("rooms")
@@ -954,12 +929,10 @@ let lastOnlineStateJson = null;
             if (error || !data || !data.state) return;
 
             const json = JSON.stringify(data.state);
-            if (json === lastOnlineStateJson) {
+            if (json === lastAppliedRemoteStateJson) {
               return;
             }
-            lastOnlineStateJson = json;
-
-            const wasGameOver = isGameOver;
+            lastAppliedRemoteStateJson = json;
 
             restoreOnlineStateFromObject(data.state);
 
@@ -969,21 +942,16 @@ let lastOnlineStateJson = null;
               currentPlayer = 2;
             }
             updateTurnUI();
-
-            if (data.state && data.state.isGameOver && !wasGameOver) {
-              endGame();
-            }
           })
           .catch((e) => {
             console.warn("online polling error", e);
           });
-      }, 1500);
+      }, 1200);
     } catch (e) {
       console.warn("startOnlinePolling exception", e);
     }
   }
 
-  // Expose for Supabase bootstrap
   window.vgStartOnlinePolling = startOnlinePolling;
 
   function showGameUIForOnlineResume() {
@@ -1030,6 +998,14 @@ function startGame() {
     endScreen.classList.add("hidden");
     gameUI.classList.remove("hidden");
     resetGameState();
+
+    if (isOnlineMatch && onlineRole === "host" && !isCpuMode()) {
+      pendingInitialOnlineSync = true;
+      if (window.vgOnline && window.vgOnline.supabase && window.vgOnline.room) {
+        syncOnlineStateToServer("init");
+        pendingInitialOnlineSync = false;
+      }
+    }
 
     // If CPU mode and it's the human's turn (Player 1), start background thinking
     if (isCpuMode() && currentPlayer === 1) {
@@ -1319,9 +1295,6 @@ function startGame() {
 
       gameStatsEl.appendChild(lastP);
       gameStatsEl.appendChild(longestP);
-    }
-    if (isOnlineMatch && !isCpuMode()) {
-      syncOnlineStateToServer("end");
     }
   }
 
@@ -2123,8 +2096,7 @@ function startGame() {
   passBtn.addEventListener("click", handlePass);
 
   // Auto-start when launched from the online lobby
-  
-(function autoStartIfOnline() {
+  (function autoStartIfOnline() {
     try {
       const roomCode = localStorage.getItem("vg_room_code");
       const role = localStorage.getItem("vg_role");
@@ -2158,7 +2130,6 @@ function startGame() {
       console.warn("autoStartIfOnline error", e);
     }
   })();
-
 });
   </script>
 
@@ -2222,6 +2193,15 @@ function startGame() {
         };
 
         console.log("VocaGrid online room loaded", window.vgOnline);
+
+        if (pendingInitialOnlineSync && isOnlineMatch && role === "host") {
+          try {
+            syncOnlineStateToServer("init");
+          } catch (e) {
+            console.warn("initial online sync error", e);
+          }
+          pendingInitialOnlineSync = false;
+        }
 
         if (window.vgStartOnlinePolling) {
           window.vgStartOnlinePolling();
