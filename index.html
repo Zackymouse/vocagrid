@@ -6,6 +6,20 @@
   <title>VOCAGRID – Online Dictionary + Corpus Board</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="game.css" />
+
+<script>
+let DICTIONARY = [];
+
+async function loadDictionary(level = "easy") {
+  const response = await fetch("./dictionaries/dictionary_" + level + ".json");
+  DICTIONARY = await response.json();
+}
+
+function isValidWord(word) {
+  return DICTIONARY.includes(word.toLowerCase());
+}
+</script>
+
 </head>
 <body>
   <!-- Start Screen -->
