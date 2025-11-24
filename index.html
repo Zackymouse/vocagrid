@@ -18,6 +18,34 @@ async function loadDictionary(level = "easy") {
 function isValidWord(word) {
   return DICTIONARY.includes(word.toLowerCase());
 }
+
+function getCpuCandidates() {
+  const words = [];
+  const used = new Set();
+  const usedWords = new Set(GAME.words.map(w => w.word.toLowerCase()));
+
+  for (let i = 0; i < tiles.length; i++) {
+    for (let j = i + 1; j < tiles.length; j++) {
+      const ids = [tiles[i].id, tiles[j].id];
+      const word = tiles[i].letter + tiles[j].letter;
+      const lower = word.toLowerCase();
+      if (used.has(lower)) continue;
+      used.add(lower);
+
+      if (usedWords.has(lower)) continue; // 🔥 NEW: already used
+      if (!isValidWord(lower)) continue;
+
+      words.push({
+        ids,
+        word,
+        score: 2
+      });
+    }
+  }
+
+  return words;
+}
+
 </script>
 
 </head>
@@ -1912,6 +1940,34 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
   }
 });
 
-  </script>
+  
+function getCpuCandidates() {
+  const words = [];
+  const used = new Set();
+  const usedWords = new Set(GAME.words.map(w => w.word.toLowerCase()));
+
+  for (let i = 0; i < tiles.length; i++) {
+    for (let j = i + 1; j < tiles.length; j++) {
+      const ids = [tiles[i].id, tiles[j].id];
+      const word = tiles[i].letter + tiles[j].letter;
+      const lower = word.toLowerCase();
+      if (used.has(lower)) continue;
+      used.add(lower);
+
+      if (usedWords.has(lower)) continue; // 🔥 NEW: already used
+      if (!isValidWord(lower)) continue;
+
+      words.push({
+        ids,
+        word,
+        score: 2
+      });
+    }
+  }
+
+  return words;
+}
+
+</script>
 </body>
 </html>
