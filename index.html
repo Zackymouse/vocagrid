@@ -1,12 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>VOCAGRID – Online Dictionary + Corpus Board</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="game.css" />
-
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<title>VOCAGRID – Online Dictionary + Corpus Board</title>
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<link href="game.css" rel="stylesheet"/>
 <script>
 let DICTIONARY = [];
 
@@ -107,207 +107,183 @@ function getCpuCandidates(level = "easy", turnPersonality = null) {
 
 
 </script>
-
-</head>
+</meta></head>
 <body>
-  <!-- Start Screen -->
-  <div id="startScreen" class="screen start">
-    <h1 id="title">VOCAGRID</h1>
-
-    <div class="card rules">
-      <h2 id="i18n_rulesTitle">How to Play</h2>
-      <ul id="i18n_rulesList">
-        <li>Players take turns selecting tiles to make an English word (2 letters or more).</li>
-        <li>When you submit a valid word, those tiles become your color and stay on the board.</li>
-        <li>If you surround one of your own tiles on all four sides with your tiles, that tile becomes <strong>locked</strong>. Locked tiles cannot be used by your opponent, but you can still use them. If the surrounding tiles are taken back, the lock is broken.</li>
-        <li>You gain <strong>+1 point for each tile</strong> that was neutral and becomes yours for the first time.</li>
-        <li>The game ends when all 25 tiles are owned. The player with the higher total points wins.</li>
-      </ul>
-    </div>
-
-    <div class="mode-select">
-      <label>
-        <input type="radio" name="mode" value="pvp" checked />
+<!-- Start Screen -->
+<div class="screen start" id="startScreen">
+<h1 id="title">VOCAGRID</h1>
+<div class="card rules">
+<h2 id="i18n_rulesTitle">How to Play</h2>
+<ul id="i18n_rulesList">
+<li>Players take turns selecting tiles to make an English word (2 letters or more).</li>
+<li>When you submit a valid word, those tiles become your color and stay on the board.</li>
+<li>If you surround one of your own tiles on all four sides with your tiles, that tile becomes <strong>locked</strong>. Locked tiles cannot be used by your opponent, but you can still use them. If the surrounding tiles are taken back, the lock is broken.</li>
+<li>You gain <strong>+1 point for each tile</strong> that was neutral and becomes yours for the first time.</li>
+<li>The game ends when all 25 tiles are owned. The player with the higher total points wins.</li>
+</ul>
+</div>
+<div class="mode-select">
+<label>
+<input checked="" name="mode" type="radio" value="pvp"/>
         Player vs Player
       </label>
-      <label>
-        <input type="radio" name="mode" value="cpu" />
+<label>
+<input name="mode" type="radio" value="cpu"/>
         Player vs Computer
       </label>
-    </div>
-
-    <div class="mode-select" id="difficultyRow" style="display: none;">
-      <span>Difficulty:</span>
-      <label>
-        <input type="radio" name="difficulty" value="easy" checked />
+</div>
+<div class="mode-select" id="difficultyRow" style="display: none;">
+<span>Difficulty:</span>
+<label>
+<input checked="" name="difficulty" type="radio" value="easy"/>
         Easy
       </label>
-      <label>
-        <input type="radio" name="difficulty" value="normal" />
+<label>
+<input name="difficulty" type="radio" value="normal"/>
         Normal
       </label>
-      <label>
-        <input type="radio" name="difficulty" value="hard" />
+<label>
+<input name="difficulty" type="radio" value="hard"/>
         Hard
       </label>
-      <label>
-        <input type="radio" name="difficulty" value="ultimate" />
+<label>
+<input name="difficulty" type="radio" value="ultimate"/>
         Ultimate
       </label>
-    </div>
-
-    <button id="onlineBtn" class="btn ghost">Online</button>
-    <button id="continueBtn" class="btn ghost hidden">Continue</button>
-    <button id="startBtn" class="btn primary">Start</button>
-  </div>
-
-  <div id="onlineScreen" class="screen online hidden">
-    <h1>VOCAGRID Online (beta)</h1>
-    <p>Online mode is under development.</p>
-    <button id="onlineBackBtn" class="btn ghost">Back to Start</button>
-  </div>
-
-  <!-- Game Screen -->
-  <div id="gameUI" class="screen game hidden">
-    <h1 id="gameTitle">VOCAGRID</h1>
-
-    <button id="backToStartBtn" class="btn back-btn">
+</div>
+<button class="btn ghost" id="onlineBtn">Online</button>
+<button class="btn ghost hidden" id="continueBtn">Continue</button>
+<button class="btn primary" id="startBtn">Start</button>
+</div>
+<div class="screen online hidden" id="onlineScreen">
+<h1>VOCAGRID Online (beta)</h1>
+<p>Online mode is under development.</p>
+<button class="btn ghost" id="onlineBackBtn">Back to Start</button>
+</div>
+<!-- Game Screen -->
+<div class="screen game hidden" id="gameUI">
+<h1 id="gameTitle">VOCAGRID</h1>
+<button class="btn back-btn" id="backToStartBtn">
       ← <span id="i18n_backToStart">Back to Start</span>
-    </button>
-
-        <div class="remaining-tiles">
-      <span id="i18n_remaining">Remaining tiles</span>:
+</button>
+<div class="remaining-tiles">
+<span id="i18n_remaining">Remaining tiles</span>:
       <span id="remainingCount">25</span>
-    </div>
-
-    <div class="game-layout">
-      <div class="board-section">
-        <div class="top-bar">
-      <div class="selected-wrap">
-        <div class="turn-indicator">
-          <span id="i18n_turnLabel">Turn</span>:
+</div>
+<div class="game-layout">
+<div class="board-section">
+<div class="top-bar">
+<div class="selected-wrap">
+<div class="turn-indicator">
+<span id="i18n_turnLabel">Turn</span>:
           <span id="turnIndicator">Player 1</span>
-        </div>
-        <div id="selectedLabel">Selected:</div>
-        <div id="selectedArea" class="chips"></div>
-        <div class="potential-score">
-          <span id="i18n_potentialScore">Potential Score</span>:
+</div>
+<div id="selectedLabel">Selected:</div>
+<div class="chips" id="selectedArea"></div>
+<div class="potential-score">
+<span id="i18n_potentialScore">Potential Score</span>:
           <span id="potentialScore">—</span>
-        </div>
-        <div class="live-status">
-          <span id="liveStatusLabel">Status</span>:
+</div>
+<div class="live-status">
+<span id="liveStatusLabel">Status</span>:
           <span id="liveStatusText">—</span>
-        </div>
-        <div id="wordSuggestions" class="word-suggestions"></div>
-      </div>
-    </div>
-
-        <div id="board" class="board"></div>
-
-        <div class="controls">
-          <button id="submitBtn" class="btn primary" type="button">Submit</button>
-          <button id="undoBtn" class="btn ghost" type="button">Undo</button>
-          <button id="clearBtn" class="btn ghost" type="button">Clear</button>
-        </div>
-
-        <p id="message" class="msg"></p>
-
-        <!-- Player box under the board -->
-        <div class="panel scores">
-          <h3 id="i18n_scoresTitle">Scores</h3>
-          <div class="score-area">
-            <div class="player-panel panel-player1">
-              <h3 class="panel-title">
-                <span id="i18n_player1Panel">Player 1</span>
-              </h3>
-              <div class="panel-content">
-                <div class="stat-row">
-                  <span class="stat-label" id="i18n_tilesLabel1">Tiles</span>
-                  <span class="stat-value" id="score1">0</span>
-                </div>
-                <div class="stat-row">
-                  <span class="stat-label" id="i18n_pointsLabel1">Points</span>
-                  <span class="stat-value" id="points1">0</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="player-panel panel-player2">
-              <h3 class="panel-title">
-                <span id="i18n_player2Panel">Player 2</span>
-              </h3>
-              <div class="panel-content">
-                <div class="stat-row">
-                  <span class="stat-label" id="i18n_tilesLabel2">Tiles</span>
-                  <span class="stat-value" id="score2">0</span>
-                </div>
-                <div class="stat-row">
-                  <span class="stat-label" id="i18n_pointsLabel2">Points</span>
-                  <span class="stat-value" id="points2">0</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right side: meaning + pass + history -->
-      <div class="side-panel">
-        <div class="pass-row">
-          <button id="passBtn" class="btn ghost" type="button">Pass</button>
-        </div>
-
-        <div class="panel cpu-info">
-          <h3>CPU Info</h3>
-          <div class="cpu-personality-row">
-            <span class="label">Personality</span>
-            <span id="cpuPersonalityLabel">-</span>
-          </div>
-          <div class="cpu-move-row">
-            <span class="label">Last move</span>
-            <span id="cpuMoveLabel">-</span>
-          </div>
-        </div>
-
-        <div class="panel meaning">
-          <h3 id="i18n_meaningTitle">Meaning</h3>
-          <div class="meaning-player" id="meaningP1">
-            <h4>Player 1 last word</h4>
-            <div class="meaning-word" id="meaningWord1">-</div>
-            <div class="meaning-pos" id="meaningPos1"></div>
-            <div class="meaning-def" id="meaningDef1"></div>
-          </div>
-          <div class="meaning-player" id="meaningP2">
-            <h4>Player 2 last word</h4>
-            <div class="meaning-word" id="meaningWord2">-</div>
-            <div class="meaning-pos" id="meaningPos2"></div>
-            <div class="meaning-def" id="meaningDef2"></div>
-          </div>
-        </div>
-
-        <div class="panel history">
-          <h3 id="i18n_history">Word History</h3>
-          <ul id="wordHistory"></ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- End Screen -->
-  <div id="endScreen" class="screen end hidden">
-    <h2 id="resultText">Game Over</h2>
-
-    <div class="final-board-container">
-      <h3 id="i18n_finalBoard">Final Board</h3>
-      <div id="finalBoard" class="board"></div>
-    </div>
-
-    <div id="gameStats" class="game-stats"></div>
-
-    <button id="replayBtn" class="btn primary" type="button">Replay</button>
-  </div>
-
-  <script>
+</div>
+<div class="word-suggestions" id="wordSuggestions"></div>
+</div>
+</div>
+<div class="board" id="board"></div>
+<div class="controls">
+<button class="btn primary" id="submitBtn" type="button">Submit</button>
+<button class="btn ghost" id="undoBtn" type="button">Undo</button>
+<button class="btn ghost" id="clearBtn" type="button">Clear</button>
+</div>
+<p class="msg" id="message"></p>
+<!-- Player box under the board -->
+<div class="panel scores">
+<h3 id="i18n_scoresTitle">Scores</h3>
+<div class="score-area">
+<div class="player-panel panel-player1">
+<h3 class="panel-title">
+<span id="i18n_player1Panel">Player 1</span>
+</h3>
+<div class="panel-content">
+<div class="stat-row">
+<span class="stat-label" id="i18n_tilesLabel1">Tiles</span>
+<span class="stat-value" id="score1">0</span>
+</div>
+<div class="stat-row">
+<span class="stat-label" id="i18n_pointsLabel1">Points</span>
+<span class="stat-value" id="points1">0</span>
+</div>
+</div>
+</div>
+<div class="player-panel panel-player2">
+<h3 class="panel-title">
+<span id="i18n_player2Panel">Player 2</span>
+</h3>
+<div class="panel-content">
+<div class="stat-row">
+<span class="stat-label" id="i18n_tilesLabel2">Tiles</span>
+<span class="stat-value" id="score2">0</span>
+</div>
+<div class="stat-row">
+<span class="stat-label" id="i18n_pointsLabel2">Points</span>
+<span class="stat-value" id="points2">0</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right side: meaning + pass + history -->
+<div class="side-panel">
+<div class="pass-row">
+<button class="btn ghost" id="passBtn" type="button">Pass</button>
+</div>
+<div class="panel cpu-info">
+<h3>CPU Info</h3>
+<div class="cpu-personality-row">
+<span class="label">Personality</span>
+<span id="cpuPersonalityLabel">-</span>
+</div>
+<div class="cpu-move-row">
+<span class="label">Last move</span>
+<span id="cpuMoveLabel">-</span>
+</div>
+</div>
+<div class="panel meaning">
+<h3 id="i18n_meaningTitle">Meaning</h3>
+<div class="meaning-player" id="meaningP1">
+<h4>Player 1 last word</h4>
+<div class="meaning-word" id="meaningWord1">-</div>
+<div class="meaning-pos" id="meaningPos1"></div>
+<div class="meaning-def" id="meaningDef1"></div>
+</div>
+<div class="meaning-player" id="meaningP2">
+<h4>Player 2 last word</h4>
+<div class="meaning-word" id="meaningWord2">-</div>
+<div class="meaning-pos" id="meaningPos2"></div>
+<div class="meaning-def" id="meaningDef2"></div>
+</div>
+</div>
+<div class="panel history">
+<h3 id="i18n_history">Word History</h3>
+<ul id="wordHistory"></ul>
+</div>
+</div>
+</div>
+</div>
+<!-- End Screen -->
+<div class="screen end hidden" id="endScreen">
+<h2 id="resultText">Game Over</h2>
+<div class="final-board-container">
+<h3 id="i18n_finalBoard">Final Board</h3>
+<div class="board" id="finalBoard"></div>
+</div>
+<div class="game-stats" id="gameStats"></div>
+<button class="btn primary" id="replayBtn" type="button">Replay</button>
+</div>
+<script>
 window.addEventListener("DOMContentLoaded", function () {
   const BOARD_SIZE = 5;
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
