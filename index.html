@@ -21,7 +21,13 @@ function isValidWord(word) {
 
 
 
-function getCpuCandidates(level = "easy", personality = "aggressive") {
+
+let CPU_STATE = {
+  comboStreak: 0,
+  turnCount: 0,
+};
+
+function getCpuCandidates(level = "easy", turnPersonality = null) {
   const words = [];
   const used = new Set();
   const usedWords = new Set(GAME.words.map(w => w.word.toLowerCase()));
@@ -45,11 +51,34 @@ function getCpuCandidates(level = "easy", personality = "aggressive") {
       let efficiency = score / word.length;
       let priorityScore = score + efficiency * 2;
 
-      words.push({ ids, word, score, priorityScore });
+      words.push({ ids, word, score, efficiency, priorityScore });
     }
   }
 
   if (words.length === 0) return null;
+
+  // 性格切替（毎ターン変化）
+  CPU_STATE.turnCount++;
+  const personalityList = ["aggressive", "defensive", "smart"];
+  const personality = turnPersonality || personalityList[CPU_STATE.turnCount % personalityList.length];
+
+  // 終盤モード判定（タイル10以下）
+  const endGameMode = tiles.length <= 10;
+  const losing = GAME.players[1].score < GAME.players[0].score;
+
+  // コンボ評価（5文字以上を連続で出せたらボーナス）
+  if (GAME.players[1].lastWord && GAME.players[1].lastWord.length >= 5) {
+    CPU_STATE.comboStreak++;
+  } else {
+    CPU_STATE.comboStreak = 0;
+  }
+
+  // ソートにコンボや状況反映
+  words.forEach(w => {
+    if (endGameMode) w.priorityScore += w.score * 1.5;
+    if (CPU_STATE.comboStreak >= 2 && w.word.length >= 5) w.priorityScore += 5;
+    if (losing) w.priorityScore += w.score * 0.5;
+  });
 
   if (personality === "aggressive") {
     return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
@@ -64,18 +93,16 @@ function getCpuCandidates(level = "easy", personality = "aggressive") {
   }
 
   if (personality === "smart") {
-    const diff = GAME.players[1].score - GAME.players[0].score;
-    if (diff > 5) {
-      // losing → aggressive mode
+    if (losing) {
       return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
     } else {
-      // winning → play it safe
       return [words.find(w => w.score <= 3) || words[0]];
     }
   }
 
   return [words[0]];
 }
+
 
 
 
@@ -1976,7 +2003,13 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
   
 
 
-function getCpuCandidates(level = "easy", personality = "aggressive") {
+
+let CPU_STATE = {
+  comboStreak: 0,
+  turnCount: 0,
+};
+
+function getCpuCandidates(level = "easy", turnPersonality = null) {
   const words = [];
   const used = new Set();
   const usedWords = new Set(GAME.words.map(w => w.word.toLowerCase()));
@@ -2000,11 +2033,34 @@ function getCpuCandidates(level = "easy", personality = "aggressive") {
       let efficiency = score / word.length;
       let priorityScore = score + efficiency * 2;
 
-      words.push({ ids, word, score, priorityScore });
+      words.push({ ids, word, score, efficiency, priorityScore });
     }
   }
 
   if (words.length === 0) return null;
+
+  // 性格切替（毎ターン変化）
+  CPU_STATE.turnCount++;
+  const personalityList = ["aggressive", "defensive", "smart"];
+  const personality = turnPersonality || personalityList[CPU_STATE.turnCount % personalityList.length];
+
+  // 終盤モード判定（タイル10以下）
+  const endGameMode = tiles.length <= 10;
+  const losing = GAME.players[1].score < GAME.players[0].score;
+
+  // コンボ評価（5文字以上を連続で出せたらボーナス）
+  if (GAME.players[1].lastWord && GAME.players[1].lastWord.length >= 5) {
+    CPU_STATE.comboStreak++;
+  } else {
+    CPU_STATE.comboStreak = 0;
+  }
+
+  // ソートにコンボや状況反映
+  words.forEach(w => {
+    if (endGameMode) w.priorityScore += w.score * 1.5;
+    if (CPU_STATE.comboStreak >= 2 && w.word.length >= 5) w.priorityScore += 5;
+    if (losing) w.priorityScore += w.score * 0.5;
+  });
 
   if (personality === "aggressive") {
     return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
@@ -2019,18 +2075,16 @@ function getCpuCandidates(level = "easy", personality = "aggressive") {
   }
 
   if (personality === "smart") {
-    const diff = GAME.players[1].score - GAME.players[0].score;
-    if (diff > 5) {
-      // losing → aggressive mode
+    if (losing) {
       return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
     } else {
-      // winning → play it safe
       return [words.find(w => w.score <= 3) || words[0]];
     }
   }
 
   return [words[0]];
 }
+
 
 
 
