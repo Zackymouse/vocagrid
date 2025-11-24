@@ -174,8 +174,8 @@
       <div class="online-section-title">Debug</div>
       <div id="online-debug" class="online-debug"></div>
 
-      <a href="index.html" class="online-link">
-        ← Back to menu
+      <a href="./" class="online-link">
+        ← Back to offline VocaGrid
       </a>
     </div>
   </div>
@@ -191,6 +191,43 @@
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzaWxxc3ZmZWVkZWlyeGFkbmpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzkyMzgsImV4cCI6MjA3ODgxNTIzOH0.wZByhkNnaDBZ0tvmLWVHcpWCSgG6fBkPAVktZTBQtpo";
 
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+// ==== Realtime リスナーの追加 ====
+let gameChannel = null;
+
+function subscribeToRoom(roomCode) {
+  if (!roomCode) return;
+
+  if (gameChannel) {
+    gameChannel.unsubscribe();
+  }
+
+  gameChannel = supabaseClient
+    .channel('room-' + roomCode)
+    .on(
+      'broadcast',
+      { event: 'game-update' },
+      payload => {
+        appendDebug('📡 Realtime update received: ' + JSON.stringify(payload.payload));
+        // TODO: ゲーム状態を payload.payload で上書きする
+      }
+    )
+    .subscribe((status) => {
+      appendDebug('📶 Realtime subscribed: ' + status);
+    });
+}
+
+function sendGameUpdate(roomCode, gameState) {
+  if (!roomCode || !gameState) return;
+  supabaseClient.channel('room-' + roomCode)
+    .send({
+      type: 'broadcast',
+      event: 'game-update',
+      payload: gameState
+    });
+}
+
 
     // ==== UI helpers ====
     function setText(id, html) {
@@ -373,3 +410,23 @@
   </script>
 </body>
 </html>
+
+
+
+// === ゲーム状態の同期 (例) ===
+let currentGameState = {};
+
+function applyGameStateFromRemote(state) {
+  appendDebug("🧩 Applying state: " + JSON.stringify(state));
+  // TODO: 各自のUIや内部状態に合わせて更新
+  // 例: board, turn, player info などを上書き
+  currentGameState = state;
+}
+
+function updateAndBroadcastState(roomCode, newStatePart) {
+  currentGameState = {
+    ...currentGameState,
+    ...newStatePart
+  };
+  sendGameUpdate(roomCode, currentGameState);
+}
