@@ -20,6 +20,7 @@ function isValidWord(word) {
 }
 
 
+
 function getCpuCandidates(level = "easy", personality = "aggressive") {
   const words = [];
   const used = new Set();
@@ -37,21 +38,21 @@ function getCpuCandidates(level = "easy", personality = "aggressive") {
       if (!isValidWord(lower)) continue;
 
       let score = word.length;
-
-      // スコア調整（レベルごとに条件）
       if (level === "easy" && word.length > 4) continue;
       if (level === "normal" && (word.length < 4 || word.length > 6)) continue;
       if (level === "hard" && word.length < 5) continue;
 
-      words.push({ ids, word, score });
+      let efficiency = score / word.length;
+      let priorityScore = score + efficiency * 2;
+
+      words.push({ ids, word, score, priorityScore });
     }
   }
 
-  // プレイスタイルによる選択
   if (words.length === 0) return null;
 
   if (personality === "aggressive") {
-    return [words.sort((a, b) => b.score - a.score)[0]];
+    return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
   }
 
   if (personality === "defensive") {
@@ -63,16 +64,19 @@ function getCpuCandidates(level = "easy", personality = "aggressive") {
   }
 
   if (personality === "smart") {
-    const diff = GAME.players[0].score - GAME.players[1].score;
+    const diff = GAME.players[1].score - GAME.players[0].score;
     if (diff > 5) {
-      return [words.find(w => w.score <= 3) || words[0]];
+      // losing → aggressive mode
+      return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
     } else {
-      return [words.sort((a, b) => b.score - a.score)[0]];
+      // winning → play it safe
+      return [words.find(w => w.score <= 3) || words[0]];
     }
   }
 
   return [words[0]];
 }
+
 
 
 </script>
@@ -1971,6 +1975,7 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
 
   
 
+
 function getCpuCandidates(level = "easy", personality = "aggressive") {
   const words = [];
   const used = new Set();
@@ -1988,21 +1993,21 @@ function getCpuCandidates(level = "easy", personality = "aggressive") {
       if (!isValidWord(lower)) continue;
 
       let score = word.length;
-
-      // スコア調整（レベルごとに条件）
       if (level === "easy" && word.length > 4) continue;
       if (level === "normal" && (word.length < 4 || word.length > 6)) continue;
       if (level === "hard" && word.length < 5) continue;
 
-      words.push({ ids, word, score });
+      let efficiency = score / word.length;
+      let priorityScore = score + efficiency * 2;
+
+      words.push({ ids, word, score, priorityScore });
     }
   }
 
-  // プレイスタイルによる選択
   if (words.length === 0) return null;
 
   if (personality === "aggressive") {
-    return [words.sort((a, b) => b.score - a.score)[0]];
+    return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
   }
 
   if (personality === "defensive") {
@@ -2014,16 +2019,19 @@ function getCpuCandidates(level = "easy", personality = "aggressive") {
   }
 
   if (personality === "smart") {
-    const diff = GAME.players[0].score - GAME.players[1].score;
+    const diff = GAME.players[1].score - GAME.players[0].score;
     if (diff > 5) {
-      return [words.find(w => w.score <= 3) || words[0]];
+      // losing → aggressive mode
+      return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
     } else {
-      return [words.sort((a, b) => b.score - a.score)[0]];
+      // winning → play it safe
+      return [words.find(w => w.score <= 3) || words[0]];
     }
   }
 
   return [words[0]];
 }
+
 
 
 </script>
