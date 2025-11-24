@@ -11,7 +11,7 @@
 let DICTIONARY = [];
 
 async function loadDictionary(level = "easy") {
-  const response = await fetch("./dictionaries/dictionary_" + level + ".json");
+  const response = await fetch("./dictionary_" + level + ".json");
   DICTIONARY = await response.json();
 }
 
@@ -906,16 +906,19 @@ function resetGameState() {
     resetLiveStatus();
   }
 
-  function startGame() {
+  async function startGame() {
     // Decide game mode from start screen radios
     gameMode = MODE_PVP;
+    let cpuSelected = false;
+    let diff = "easy";
 
     if (modeRadios && modeRadios.length) {
       modeRadios.forEach((r) => {
         if (r.checked) {
           if (r.value === "cpu") {
             // Player vs Computer
-            let diff = "easy";
+            cpuSelected = true;
+            diff = "easy";
             if (difficultyRadios && difficultyRadios.length) {
               difficultyRadios.forEach((d) => {
                 if (d.checked) diff = d.value;
@@ -935,6 +938,15 @@ function resetGameState() {
           }
         }
       });
+    }
+
+    // Load CPU dictionary for selected difficulty (if CPU mode)
+    if (cpuSelected) {
+      try {
+        await loadDictionary(diff);
+      } catch (e) {
+        console.warn("Failed to load CPU dictionary for difficulty:", diff, e);
+      }
     }
 
     // Randomize CPU personality for this game based on mode
