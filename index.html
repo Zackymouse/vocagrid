@@ -19,7 +19,8 @@ function isValidWord(word) {
   return DICTIONARY.includes(word.toLowerCase());
 }
 
-function getCpuCandidates() {
+
+function getCpuCandidates(level = "easy", personality = "aggressive") {
   const words = [];
   const used = new Set();
   const usedWords = new Set(GAME.words.map(w => w.word.toLowerCase()));
@@ -32,19 +33,47 @@ function getCpuCandidates() {
       if (used.has(lower)) continue;
       used.add(lower);
 
-      if (usedWords.has(lower)) continue; // 🔥 NEW: already used
+      if (usedWords.has(lower)) continue;
       if (!isValidWord(lower)) continue;
 
-      words.push({
-        ids,
-        word,
-        score: 2
-      });
+      let score = word.length;
+
+      // スコア調整（レベルごとに条件）
+      if (level === "easy" && word.length > 4) continue;
+      if (level === "normal" && (word.length < 4 || word.length > 6)) continue;
+      if (level === "hard" && word.length < 5) continue;
+
+      words.push({ ids, word, score });
     }
   }
 
-  return words;
+  // プレイスタイルによる選択
+  if (words.length === 0) return null;
+
+  if (personality === "aggressive") {
+    return [words.sort((a, b) => b.score - a.score)[0]];
+  }
+
+  if (personality === "defensive") {
+    return [words.find(w => w.score > 5 || w.word.includes("S")) || words[0]];
+  }
+
+  if (personality === "random") {
+    return [words[Math.floor(Math.random() * words.length)]];
+  }
+
+  if (personality === "smart") {
+    const diff = GAME.players[0].score - GAME.players[1].score;
+    if (diff > 5) {
+      return [words.find(w => w.score <= 3) || words[0]];
+    } else {
+      return [words.sort((a, b) => b.score - a.score)[0]];
+    }
+  }
+
+  return [words[0]];
 }
+
 
 </script>
 
@@ -1941,7 +1970,8 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
 });
 
   
-function getCpuCandidates() {
+
+function getCpuCandidates(level = "easy", personality = "aggressive") {
   const words = [];
   const used = new Set();
   const usedWords = new Set(GAME.words.map(w => w.word.toLowerCase()));
@@ -1954,19 +1984,47 @@ function getCpuCandidates() {
       if (used.has(lower)) continue;
       used.add(lower);
 
-      if (usedWords.has(lower)) continue; // 🔥 NEW: already used
+      if (usedWords.has(lower)) continue;
       if (!isValidWord(lower)) continue;
 
-      words.push({
-        ids,
-        word,
-        score: 2
-      });
+      let score = word.length;
+
+      // スコア調整（レベルごとに条件）
+      if (level === "easy" && word.length > 4) continue;
+      if (level === "normal" && (word.length < 4 || word.length > 6)) continue;
+      if (level === "hard" && word.length < 5) continue;
+
+      words.push({ ids, word, score });
     }
   }
 
-  return words;
+  // プレイスタイルによる選択
+  if (words.length === 0) return null;
+
+  if (personality === "aggressive") {
+    return [words.sort((a, b) => b.score - a.score)[0]];
+  }
+
+  if (personality === "defensive") {
+    return [words.find(w => w.score > 5 || w.word.includes("S")) || words[0]];
+  }
+
+  if (personality === "random") {
+    return [words[Math.floor(Math.random() * words.length)]];
+  }
+
+  if (personality === "smart") {
+    const diff = GAME.players[0].score - GAME.players[1].score;
+    if (diff > 5) {
+      return [words.find(w => w.score <= 3) || words[0]];
+    } else {
+      return [words.sort((a, b) => b.score - a.score)[0]];
+    }
+  }
+
+  return [words[0]];
 }
+
 
 </script>
 </body>
