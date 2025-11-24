@@ -27,10 +27,12 @@ let CPU_STATE = {
   turnCount: 0,
 };
 
+
 function getCpuCandidates(level = "easy", turnPersonality = null) {
   const words = [];
   const used = new Set();
   const usedWords = new Set(GAME.words.map(w => w.word.toLowerCase()));
+  CPU_STATE.turnCount++;
 
   for (let i = 0; i < tiles.length; i++) {
     for (let j = i + 1; j < tiles.length; j++) {
@@ -47,61 +49,33 @@ function getCpuCandidates(level = "easy", turnPersonality = null) {
       if (level === "easy" && word.length > 4) continue;
       if (level === "normal" && (word.length < 4 || word.length > 6)) continue;
       if (level === "hard" && word.length < 5) continue;
+      if (level === "ultimate" && word.length < 6) continue;
 
       let efficiency = score / word.length;
-      let priorityScore = score + efficiency * 2;
+      let priorityScore = score + efficiency * 3;
 
-      words.push({ ids, word, score, efficiency, priorityScore });
+      // Ultimate: 長い単語優先 + 逆転 + 終盤 + コンボ重視
+      if (level === "ultimate") {
+        if (word.length >= 8) priorityScore += 12;
+        if (word.length >= 10) priorityScore += 20;
+        if (tiles.length <= 10) priorityScore += score * 2;
+        if (CPU_STATE.comboStreak >= 2 && word.length >= 5) priorityScore += 10;
+        if (GAME.players[1].score < GAME.players[0].score) priorityScore += score * 1.5;
+      }
+
+      words.push({ ids, word, score, priorityScore });
     }
   }
 
   if (words.length === 0) return null;
 
-  // 性格切替（毎ターン変化）
-  CPU_STATE.turnCount++;
-  const personalityList = ["aggressive", "defensive", "smart"];
-  const personality = turnPersonality || personalityList[CPU_STATE.turnCount % personalityList.length];
-
-  // 終盤モード判定（タイル10以下）
-  const endGameMode = tiles.length <= 10;
-  const losing = GAME.players[1].score < GAME.players[0].score;
-
-  // コンボ評価（5文字以上を連続で出せたらボーナス）
-  if (GAME.players[1].lastWord && GAME.players[1].lastWord.length >= 5) {
-    CPU_STATE.comboStreak++;
-  } else {
-    CPU_STATE.comboStreak = 0;
-  }
-
-  // ソートにコンボや状況反映
-  words.forEach(w => {
-    if (endGameMode) w.priorityScore += w.score * 1.5;
-    if (CPU_STATE.comboStreak >= 2 && w.word.length >= 5) w.priorityScore += 5;
-    if (losing) w.priorityScore += w.score * 0.5;
-  });
-
-  if (personality === "aggressive") {
+  if (level === "ultimate") {
     return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
-  }
-
-  if (personality === "defensive") {
-    return [words.find(w => w.score > 5 || w.word.includes("S")) || words[0]];
-  }
-
-  if (personality === "random") {
-    return [words[Math.floor(Math.random() * words.length)]];
-  }
-
-  if (personality === "smart") {
-    if (losing) {
-      return [words.sort((a, b) => b.priorityScore - a.priorityScore)[0]];
-    } else {
-      return [words.find(w => w.score <= 3) || words[0]];
-    }
   }
 
   return [words[0]];
 }
+
 
 
 
