@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <title>VOCAGRID – Online Dictionary + Corpus Board</title>
-<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <link href="game.css" rel="stylesheet"/>
 <script>
 let DICTIONARY = [];
@@ -117,7 +117,7 @@ function getCpuCandidates(level = "easy", turnPersonality = null) {
 
 
 </script>
-</meta></head>
+</head>
 <body>
 <!-- Start Screen -->
 <div class="screen start" id="startScreen">
@@ -2039,6 +2039,17 @@ function startOnlineGame() {
   }
   // supabase関連処理をここに追加
   startGame("online");
+}
+
+// CPU Info 表示更新用 - Ultimateのときに表示も切り替える
+function updateCpuPersonalityDisplay(level, personality) {
+  const elem = document.getElementById("cpu-personality");
+  if (!elem) return;
+  if (level === "ultimate") {
+    elem.innerText = "Personality: Ultimate（最強）";
+  } else {
+    elem.innerText = "Personality: " + personality;
+  }
 }
 </script></body>
 </html>
