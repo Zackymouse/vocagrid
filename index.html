@@ -10,47 +10,17 @@
 <script>
 let DICTIONARY = [];
 
-// 難易度ごとに外部JSON辞書を読み込み、統合する
-async function loadDifficultyDictionaries(level = "easy") {
-  const levelsToLoad = [];
-  if (level === "easy") {
-    levelsToLoad.push("easy");
-  } else if (level === "normal") {
-    levelsToLoad.push("easy", "normal");
-  } else if (level === "hard") {
-    levelsToLoad.push("easy", "normal", "hard");
-  } else if (level === "ultimate") {
-    levelsToLoad.push("easy", "normal", "hard", "ultimate");
-  } else {
-    levelsToLoad.push(level);
-  }
-
-  const set = new Set();
-  for (const lv of levelsToLoad) {
-    try {
-      const resp = await fetch("./dictionary_" + lv + ".json");
-      if (!resp.ok) continue;
-      const data = await resp.json();
-      if (Array.isArray(data)) {
-        for (const w of data) {
-          if (typeof w === "string") {
-            const lower = w.toLowerCase().trim();
-            if (lower) set.add(lower);
-          }
-        }
-      }
-    } catch (e) {
-      // 個別辞書の読み込み失敗は無視
-    }
-  }
-  DICTIONARY = Array.from(set);
+async function loadDictionary(level = "easy") {
+  const response = await fetch("./dictionaries/dictionary_" + level + ".json");
+  DICTIONARY = await response.json();
 }
 
 function isValidWord(word) {
-  if (!word) return false;
-  const lower = word.toLowerCase();
-  return Array.isArray(DICTIONARY) && DICTIONARY.includes(lower);
+  return DICTIONARY.includes(word.toLowerCase());
 }
+
+
+
 
 let CPU_STATE = {
   comboStreak: 0,
@@ -357,6 +327,7 @@ window.addEventListener("DOMContentLoaded", function () {
   const PERSONALITY_LONGWORD   = "longword";
   const PERSONALITY_CAUTIOUS   = "cautious";
   const PERSONALITY_GAMBLER    = "gambler";
+  const PERSONALITY_ULTIMATE   = "ultimate";
 
   let cpuPersonality = PERSONALITY_AGGRESSIVE;
 
@@ -936,7 +907,7 @@ function resetGameState() {
     resetLiveStatus();
   }
 
-  async function startGame() {
+  function startGame() {
     // Decide game mode from start screen radios
     gameMode = MODE_PVP;
 
@@ -967,21 +938,7 @@ function resetGameState() {
       });
     }
 
-    // 難易度に応じて JSON 辞書を読み込み
-if (gameMode === MODE_CPU_EASY) {
-  await loadDifficultyDictionaries("easy");
-} else if (gameMode === MODE_CPU_NORMAL) {
-  await loadDifficultyDictionaries("normal");
-} else if (gameMode === MODE_CPU_HARD) {
-  await loadDifficultyDictionaries("hard");
-} else if (gameMode === MODE_CPU_ULTIMATE) {
-  await loadDifficultyDictionaries("ultimate");
-} else {
-  // PvP など CPU を使わないモードでは辞書を空にしておく
-  DICTIONARY = [];
-}
-
-// Randomize CPU personality for this game based on mode
+    // Randomize CPU personality for this game based on mode
     if (typeof updateLayoutForMode === "function") {
       updateLayoutForMode();
     }
@@ -1349,18 +1306,9 @@ if (gameMode === MODE_CPU_EASY) {
         PERSONALITY_GAMBLER
       ];
     } else if (gameMode === MODE_CPU_ULTIMATE) {
-      // Ultimate: 全部盛り。ロング＆攻撃/防御を厚めにしつつ、たまに慎重/ギャンブラーも混ざる
+      // Ultimate: 万能最強。専用性格で常に最適手を狙う
       candidates = [
-        PERSONALITY_LONGWORD,
-        PERSONALITY_LONGWORD,
-        PERSONALITY_LONGWORD,
-        PERSONALITY_AGGRESSIVE,
-        PERSONALITY_AGGRESSIVE,
-        PERSONALITY_AGGRESSIVE,
-        PERSONALITY_DEFENSIVE,
-        PERSONALITY_DEFENSIVE,
-        PERSONALITY_GAMBLER,
-        PERSONALITY_CAUTIOUS
+        PERSONALITY_ULTIMATE
       ];
     } else {
       return;
@@ -1410,6 +1358,8 @@ function getCpuPersonalityLabelText() {
       return "Cautious (慎重)";
     case PERSONALITY_GAMBLER:
       return "Gambler (ギャンブル)";
+    case PERSONALITY_ULTIMATE:
+      return "Ultimate (最強)";
     default:
       return "-";
   }
@@ -1508,6 +1458,17 @@ function pickCandidateByPersonality(candidates) {
     const list = candidates.slice();
 
     switch (cpuPersonality) {
+      case PERSONALITY_ULTIMATE: {
+        // Ultimate: 万能最強。得点とタイル獲得を総合評価して一番強い手を選ぶ
+        const scoreValue = (c) => {
+          const len = (c.word || "").length;
+          const gain = c.gain || 0;
+          return gain * 4 + len * 2;
+        };
+        list.sort((a, b) => scoreValue(b) - scoreValue(a));
+        break;
+      }
+
       case PERSONALITY_AGGRESSIVE:
         // gain 大きい順
         list.sort((a, b) => b.gain - a.gain);
@@ -1556,7 +1517,7 @@ function pickCandidateByPersonality(candidates) {
         list.sort((a, b) => b.gain - a.gain);
     }
 
-    const bucketSize = Math.min(3, list.length);
+    const bucketSize = (cpuPersonality === PERSONALITY_ULTIMATE) ? 1 : Math.min(3, list.length);
     const choiceIndex = Math.floor(Math.random() * bucketSize);
     return list[choiceIndex];
   }
@@ -1602,10 +1563,10 @@ const cpuLexiconCache = new Set();
 
 function isInOfflineLexicon(wordUpper) {
   if (!wordUpper) return false;
-  const lower = wordUpper.toLowerCase();
-  return Array.isArray(DICTIONARY) && DICTIONARY.includes(lower);
+  if (OFFLINE_LEXICON_CORE.includes(wordUpper)) return true;
+  if (OFFLINE_LEXICON_LONG.includes(wordUpper)) return true;
+  return false;
 }
-
 
 function canMakeWordFromBoard(wordUpper, player) {
   if (!wordUpper) return false;
@@ -1624,27 +1585,29 @@ function canMakeWordFromBoard(wordUpper, player) {
 }
 
 function getOfflineLexiconCandidates(minLen, maxLenWord, player, preferLong) {
-  const list = Array.isArray(DICTIONARY) ? DICTIONARY : [];
-  if (!list.length) return [];
-
-  // コピーして長さ順に並べ替え（preferLong のときはロング優先）
-  const words = list.slice();
-  words.sort((a, b) => {
-    const la = (a || "").length;
-    const lb = (b || "").length;
-    return preferLong ? (lb - la) : (la - lb);
-  });
-
+  const core = OFFLINE_LEXICON_CORE || [];
+  const longs = OFFLINE_LEXICON_LONG || [];
+  const primary = preferLong ? longs : core;
+  const secondary = preferLong ? core : longs;
   const results = [];
-  for (const w of words) {
-    const upper = (w || "").toUpperCase();
-    const len = upper.length;
-    if (len < minLen || len > maxLenWord) continue;
-    if (!canMakeWordFromBoard(upper, player)) continue;
-    if (usedWords.has(w.toLowerCase())) continue;
-    results.push(upper);
-    if (results.length >= 80) break; // 上限
+
+  function collectFromLexicon(lex) {
+    for (const w of lex) {
+      const upper = w.toUpperCase();
+      const len = upper.length;
+      if (len < minLen || len > maxLenWord) continue;
+      if (!canMakeWordFromBoard(upper, player)) continue;
+      if (usedWords.has(upper.toLowerCase())) continue;
+      results.push(upper);
+      if (results.length >= 40) break; // 上限
+    }
   }
+
+  collectFromLexicon(primary);
+  if (results.length < 40) {
+    collectFromLexicon(secondary);
+  }
+
   return results;
 }
 
@@ -1652,22 +1615,26 @@ async function validateWithHybrid(word) {
   const upper = (word || "").toUpperCase();
   if (!upper) return { ok: false };
 
-  // 1) キャッシュ済みなら即OK
+  // 1) すでにキャッシュ済みなら即OK
   if (cpuLexiconCache.has(upper)) {
     return { ok: true };
   }
 
-  // 2) JSON 辞書（DICTIONARY）のみを参照
+  // 2) オフライン辞書に含まれていればOK扱い
   if (isInOfflineLexicon(upper)) {
     cpuLexiconCache.add(upper);
     return { ok: true };
   }
 
-  // JSON 辞書にない単語は CPU にとってはNG
-  return { ok: false };
+  // 3) 最後の手段としてオンライン辞書に問い合わせ
+  const res = await validateWord(word);
+  if (res.ok) {
+    cpuLexiconCache.add(upper);
+  }
+  return res;
 }
 
-function getUsableTilesForCpu() {
+  function getUsableTilesForCpu() {
     // CPU can use any tile except an opponent's locked tile
     return tiles.filter((t) => !(t.lockOwner && t.lockOwner !== CPU_PLAYER));
   }
