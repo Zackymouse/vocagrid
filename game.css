@@ -13,6 +13,8 @@
   box-sizing: border-box;
 }
 body {
+  overflow-x: hidden;
+
   font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial, sans-serif;
   background: #f5f7fb;
   color: #222;
@@ -439,10 +441,42 @@ h1 {
 }
 
 @media (max-width: 480px) {
-  #board {
-    grid-template-columns: repeat(5, 52px);
-    gap: 6px;
+  /* Prevent horizontal scroll and fit the board nicely on phones */
+  body {
+    overflow-x: hidden;
   }
+
+  .screen.start,
+  .screen.end {
+    padding: 24px 12px;
+    margin: 0 auto;
+  }
+
+  .game-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #board {
+    grid-template-columns: repeat(5, 16vw);
+    gap: 2.2vw;
+    margin: 0 auto;
+  }
+
+  .tile {
+    width: 16vw !important;
+    height: 16vw !important;
+    font-size: 6vw !important;
+  }
+
+  .panel {
+    width: 100%;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
   .tile {
     width: 52px !important;
     height: 52px !important;
@@ -904,7 +938,8 @@ h1 {
     align-items: center;
   }
 
-  .info-section {
+  .info-section,
+  .side-panel {
     flex: 1 1 auto;
     width: 100%;
     max-width: 400px;
