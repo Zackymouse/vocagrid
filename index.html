@@ -11,7 +11,7 @@
 let DICTIONARY = [];
 
 async function loadDictionary(level = "easy") {
-  const response = await fetch("./dictionary_" + level + ".json");
+  const response = await fetch("./dictionaries/dictionary_" + level + ".json");
   DICTIONARY = await response.json();
 }
 
@@ -327,6 +327,7 @@ window.addEventListener("DOMContentLoaded", function () {
   const PERSONALITY_LONGWORD   = "longword";
   const PERSONALITY_CAUTIOUS   = "cautious";
   const PERSONALITY_GAMBLER    = "gambler";
+  const PERSONALITY_ULTIMATE   = "ultimate";
 
   let cpuPersonality = PERSONALITY_AGGRESSIVE;
 
@@ -906,19 +907,16 @@ function resetGameState() {
     resetLiveStatus();
   }
 
-  async function startGame() {
+  function startGame() {
     // Decide game mode from start screen radios
     gameMode = MODE_PVP;
-    let cpuSelected = false;
-    let diff = "easy";
 
     if (modeRadios && modeRadios.length) {
       modeRadios.forEach((r) => {
         if (r.checked) {
           if (r.value === "cpu") {
             // Player vs Computer
-            cpuSelected = true;
-            diff = "easy";
+            let diff = "easy";
             if (difficultyRadios && difficultyRadios.length) {
               difficultyRadios.forEach((d) => {
                 if (d.checked) diff = d.value;
@@ -938,15 +936,6 @@ function resetGameState() {
           }
         }
       });
-    }
-
-    // Load CPU dictionary for selected difficulty (if CPU mode)
-    if (cpuSelected) {
-      try {
-        await loadDictionary(diff);
-      } catch (e) {
-        console.warn("Failed to load CPU dictionary for difficulty:", diff, e);
-      }
     }
 
     // Randomize CPU personality for this game based on mode
@@ -1317,18 +1306,9 @@ function resetGameState() {
         PERSONALITY_GAMBLER
       ];
     } else if (gameMode === MODE_CPU_ULTIMATE) {
-      // Ultimate: 全部盛り。ロング＆攻撃/防御を厚めにしつつ、たまに慎重/ギャンブラーも混ざる
+      // Ultimate: 万能最強。専用性格で常に最適手を狙う
       candidates = [
-        PERSONALITY_LONGWORD,
-        PERSONALITY_LONGWORD,
-        PERSONALITY_LONGWORD,
-        PERSONALITY_AGGRESSIVE,
-        PERSONALITY_AGGRESSIVE,
-        PERSONALITY_AGGRESSIVE,
-        PERSONALITY_DEFENSIVE,
-        PERSONALITY_DEFENSIVE,
-        PERSONALITY_GAMBLER,
-        PERSONALITY_CAUTIOUS
+        PERSONALITY_ULTIMATE
       ];
     } else {
       return;
@@ -1378,6 +1358,8 @@ function getCpuPersonalityLabelText() {
       return "Cautious (慎重)";
     case PERSONALITY_GAMBLER:
       return "Gambler (ギャンブル)";
+    case PERSONALITY_ULTIMATE:
+      return "Ultimate (最強)";
     default:
       return "-";
   }
@@ -1476,6 +1458,17 @@ function pickCandidateByPersonality(candidates) {
     const list = candidates.slice();
 
     switch (cpuPersonality) {
+      case PERSONALITY_ULTIMATE: {
+        // Ultimate: 万能最強。得点とタイル獲得を総合評価して一番強い手を選ぶ
+        const scoreValue = (c) => {
+          const len = (c.word || "").length;
+          const gain = c.gain || 0;
+          return gain * 4 + len * 2;
+        };
+        list.sort((a, b) => scoreValue(b) - scoreValue(a));
+        break;
+      }
+
       case PERSONALITY_AGGRESSIVE:
         // gain 大きい順
         list.sort((a, b) => b.gain - a.gain);
@@ -1524,7 +1517,7 @@ function pickCandidateByPersonality(candidates) {
         list.sort((a, b) => b.gain - a.gain);
     }
 
-    const bucketSize = Math.min(3, list.length);
+    const bucketSize = (cpuPersonality === PERSONALITY_ULTIMATE) ? 1 : Math.min(3, list.length);
     const choiceIndex = Math.floor(Math.random() * bucketSize);
     return list[choiceIndex];
   }
