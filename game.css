@@ -439,12 +439,9 @@ h1 {
 }
 
 @media (max-width: 480px) {
-  .screen {
-    padding: 0 8px;
-  }
   #board {
     grid-template-columns: repeat(5, 52px);
-    gap: 4px;
+    gap: 6px;
   }
   .tile {
     width: 52px !important;
@@ -519,7 +516,7 @@ h1 {
 /* Both types of locked tiles get the lock icon */
 .tile.locked-self::before,
 .tile.locked-opponent::before {
-  content: "🔒";
+  content: "白";
   position: absolute;
   top: 2px;
   left: 2px;
@@ -560,7 +557,7 @@ h1 {
 }
 
 .tile.locked::before {
-  content: "🔒";
+  content: "白";
   position: absolute;
   top: 2px;
   left: 2px;
@@ -585,7 +582,7 @@ h1 {
 }
 
 .tile.bonus::after {
-  content: "★";
+  content: "笘�";
   position: absolute;
   top: -8px;
   right: -8px;
@@ -772,6 +769,19 @@ h1 {
 .info-section .meaning-box {
   max-height: 200px;
   overflow-y: auto;
+}
+
+/* Offline mode side panel (meaning + history) shares the same layout */
+.side-panel {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.side-panel .panel {
+  width: 100%;
+  margin: 0;
 }
 
 /* Added simple realtime preview styles */
