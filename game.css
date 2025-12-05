@@ -1096,27 +1096,3 @@ h1 {
 body.online-remote .panel.cpu-info {
   display: none;
 }
-
-/* === Mobile layout tweaks for selected word area (v-mobile-drag) === */
-.chip {
-  touch-action: none;
-}
-
-@media (max-width: 640px) {
-  .top-bar {
-    width: 100%;
-    padding: 0 8px;
-  }
-
-  .selected-wrap {
-    width: 100%;
-    align-items: stretch;
-  }
-
-  #selectedArea.chips {
-    flex-wrap: nowrap;
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
