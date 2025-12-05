@@ -1568,7 +1568,7 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
   const candidates = [];
   const triedWords = new Set();
   const startTime = Date.now();
-  const TIME_LIMIT_MS = (gameMode === MODE_CPU_ULTIMATE ? 4500 : 3000);
+  const TIME_LIMIT_MS = (gameMode === MODE_CPU_ULTIMATE ? 6000 : 3000);
 
   const usable = getUsableTilesForCpu();
   if (usable.length < 2) return candidates;
@@ -1670,7 +1670,7 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
 
     try {
       if (gameMode === MODE_CPU_ULTIMATE) {
-        cpuPrecomputedCandidates = await generateCpuCandidatesEasy(14, 120, 5, 8);
+        cpuPrecomputedCandidates = await generateCpuCandidatesEasy(20, 200, 5, 10);
       } else if (gameMode === MODE_CPU_HARD) {
         cpuPrecomputedCandidates = await generateCpuCandidatesEasy(10, 80, 5, 7);
       } else if (gameMode === MODE_CPU_NORMAL) {
@@ -1711,7 +1711,7 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
 
     // Ultimate では極力 Pass を避けるため、候補が空ならもう一度だけ緩め条件で探索
     if (!candidates.length && !isGameOver && gameMode === MODE_CPU_ULTIMATE) {
-      const extraCandidates = await generateCpuCandidatesEasy(12, 140, 3, 8);
+      const extraCandidates = await generateCpuCandidatesEasy(20, 220, 3, 10);
       if (extraCandidates && extraCandidates.length) {
         candidates = extraCandidates;
       }
@@ -2088,28 +2088,66 @@ function pickCandidateByPersonality(candidates) {
     return _originalPickCandidateByPersonality(candidates);
   }
 
-  // 元の候補選択結果を基本としつつ、JACET のバンド情報でわずかに調整
   const baseChoice = _originalPickCandidateByPersonality(candidates);
   if (!baseChoice) return baseChoice;
 
-  // Ultimate / Hard では、同じくらい強い手の中で「より高いバンド（=より難しい語）」を優先
   const scored = candidates.map((c) => {
     const word = (c.word || "").toLowerCase();
     const band = getJacetBand(word); // 0..8
     const len = (c.word || "").length;
     const gain = c.gain || 0;
 
-    // 元のスコア感覚に寄せた簡易評価
+    // 元のスコア感覚に寄せたベース
     const baseScore = gain * 4 + len * 2;
-    // 高いバンドほど +α（最大で +8）
     const jacetBonus = band;
     return {
       cand: c,
-      score: baseScore + jacetBonus
+      baseScore: baseScore + jacetBonus,
+      band,
+      len,
+      gain,
     };
   });
 
-  scored.sort((a, b) => b.score - a.score);
+  if (gameMode === MODE_CPU_ULTIMATE) {
+    // Ultimate: 0点の手を強く避け、ロック/大量取得と長い単語を最優先
+    scored.forEach((s) => {
+      let score = 0;
+      const g = s.gain;
+      const L = s.len;
+      const B = s.band;
+
+      // タイル獲得を最重要
+      score += g * 10;
+
+      // 長い単語を優先（5文字以上で加点を大きく）
+      if (L >= 8) {
+        score += L * 6;
+      } else if (L >= 6) {
+        score += L * 4;
+      } else if (L >= 4) {
+        score += L * 2;
+      } else {
+        score -= (5 - L) * 4;
+      }
+
+      // JACETバンドは高いほど +α （難しい語をちょい優遇）
+      score += B * 2;
+
+      // gain 0 の手はほぼ選ばない
+      if (g === 0) {
+        score -= 60;
+      }
+
+      s.score = score;
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored[0].cand || baseChoice;
+  }
+
+  // Hard: これまで通りに近いが、JACET情報で少しだけ調整
+  scored.sort((a, b) => b.baseScore - a.baseScore);
   return scored[0].cand || baseChoice;
 }
 
