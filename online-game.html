@@ -1227,52 +1227,6 @@ function startGame() {
     }
   });
 
-// Touch support for reordering selected chips on mobile
-let touchDragStartId = null;
-let touchDragStartIndex = null;
-
-selectedArea.addEventListener("touchstart", (e) => {
-  const touchChip = e.target.closest(".chip");
-  if (!touchChip) return;
-  touchDragStartId = touchChip.dataset.id;
-  touchDragStartIndex = selectedIds.indexOf(touchDragStartId);
-});
-
-selectedArea.addEventListener("touchend", (e) => {
-  if (touchDragStartId === null || touchDragStartIndex === null) return;
-  const touch = e.changedTouches && e.changedTouches[0];
-  if (!touch) {
-    touchDragStartId = null;
-    touchDragStartIndex = null;
-    return;
-  }
-  const elem = document.elementFromPoint(touch.clientX, touch.clientY);
-  const dropChip = elem && elem.closest && elem.closest(".chip");
-  let toIndex = selectedIds.length - 1;
-  if (dropChip) {
-    const toId = dropChip.dataset.id;
-    const idx = selectedIds.indexOf(toId);
-    if (idx !== -1) {
-      toIndex = idx;
-    }
-  }
-  const fromIndex = touchDragStartIndex;
-  if (
-    fromIndex !== null &&
-    fromIndex >= 0 &&
-    fromIndex < selectedIds.length &&
-    fromIndex !== toIndex
-  ) {
-    const moved = selectedIds.splice(fromIndex, 1)[0];
-    selectedIds.splice(toIndex, 0, moved);
-    updateSelectedUI();
-  }
-  touchDragStartId = null;
-  touchDragStartIndex = null;
-});
-
-
-
 
 
   function pickRandomPersonalityForMode() {
