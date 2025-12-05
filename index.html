@@ -1947,5 +1947,181 @@ function updateCpuPersonalityDisplay(level, personality) {
     elem.innerText = "Personality: " + personality;
   }
 }
+
+
+// === JACET frequency-based CPU enhancements (non-destructive wrapper) ===
+// このブロックは、JACET8000 のローカル txt ファイル（jacet1000.txt 〜 jacet8000.txt）が
+// 同じフォルダに配置されている場合にだけ動作します。
+// ファイルが存在しない場合、CPU の挙動は従来通りです。
+
+let jacetFreqMap = null;      // word(lowercase) -> rank(1..8000)
+let jacetBands = null;        // [ [1-1000], [1001-2000], ... ]
+let jacetLoadStarted = false;
+
+async function initJacetLexicon() {
+  if (jacetLoadStarted) return;
+  jacetLoadStarted = true;
+  jacetFreqMap = new Map();
+  jacetBands = Array.from({ length: 8 }, () => []);
+
+  const bands = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000];
+  let currentRank = 1;
+
+  for (let i = 0; i < bands.length; i++) {
+    const size = bands[i];
+    const bandIndex = i; // 0..7
+
+    // ローカルの jacetXXXX.txt を読むことを想定（事前にユーザーが配置）
+    const fileName = `jacet${size}.txt`;
+    try {
+      const res = await fetch(fileName);
+      if (!res.ok) continue;
+      const text = await res.text();
+      // lextutor 形式は基本的に空白区切りで 1000 語
+      const rawTokens = text.split(/\s+/);
+      for (const token of rawTokens) {
+        const w = (token || "").trim().toLowerCase();
+        if (!w || jacetFreqMap.has(w)) continue;
+        jacetFreqMap.set(w, currentRank++);
+        if (jacetBands[bandIndex]) {
+          jacetBands[bandIndex].push(w);
+        }
+      }
+    } catch (e) {
+      // ネットワーク・ローカルアクセスに失敗した場合は無視
+    }
+  }
+}
+
+function hasJacetLexicon() {
+  return !!(jacetFreqMap && jacetFreqMap.size && jacetBands && jacetBands.length);
+}
+
+function getJacetRank(word) {
+  if (!hasJacetLexicon()) return null;
+  if (!word) return null;
+  const key = String(word).toLowerCase();
+  const rank = jacetFreqMap.get(key);
+  return rank || null;
+}
+
+function getJacetBand(word) {
+  const rank = getJacetRank(word);
+  if (!rank) return 0;
+  // 1-1000 -> 1, 1001-2000 -> 2, ... 7001-8000 -> 8
+  return Math.min(8, Math.ceil(rank / 1000));
+}
+
+// 既存の getOfflineLexiconCandidates を保持してラップする
+const _originalGetOfflineLexiconCandidates = typeof getOfflineLexiconCandidates === "function"
+  ? getOfflineLexiconCandidates
+  : null;
+
+function getOfflineLexiconCandidates(minLen, maxLenWord, player, preferLong) {
+  // JACET がロード済みならこちらを優先的に使う
+  if (hasJacetLexicon()) {
+    const results = [];
+
+    function collectFromList(list) {
+      for (const w of list) {
+        const upper = w.toUpperCase();
+        const len = upper.length;
+        if (len < minLen || len > maxLenWord) continue;
+        if (!canMakeWordFromBoard(upper, player)) continue;
+        if (usedWords.has(upper.toLowerCase())) continue;
+        results.push(upper);
+        if (results.length >= 40) break;
+      }
+    }
+
+    // 難易度に応じてどのバンドまで使うかを変える
+    let maxBandIndex = 1; // 0-based: 0=1k,1=2k
+    if (gameMode === MODE_CPU_EASY) {
+      maxBandIndex = 1; // 1-2k
+    } else if (gameMode === MODE_CPU_NORMAL) {
+      maxBandIndex = 3; // 1-4k
+    } else if (gameMode === MODE_CPU_HARD) {
+      maxBandIndex = 5; // 1-6k
+    } else if (gameMode === MODE_CPU_ULTIMATE) {
+      maxBandIndex = 7; // 1-8k
+    }
+
+    // preferLong のときは高いバンドから先に見る
+    if (preferLong) {
+      for (let band = maxBandIndex; band >= 0 && results.length < 40; band--) {
+        const bandList = jacetBands[band] || [];
+        collectFromList(bandList);
+      }
+    } else {
+      for (let band = 0; band <= maxBandIndex && results.length < 40; band++) {
+        const bandList = jacetBands[band] || [];
+        collectFromList(bandList);
+      }
+    }
+
+    if (results.length) {
+      return results;
+    }
+    // JACET から拾えなかった場合は、元のロジックにフォールバック
+  }
+
+  if (_originalGetOfflineLexiconCandidates) {
+    return _originalGetOfflineLexiconCandidates(minLen, maxLenWord, player, preferLong);
+  }
+  return [];
+}
+
+// pickCandidateByPersonality も包み込んで、JACET 情報があれば Ultimate/Hard の判断を少し強化
+const _originalPickCandidateByPersonality = typeof pickCandidateByPersonality === "function"
+  ? pickCandidateByPersonality
+  : null;
+
+function pickCandidateByPersonality(candidates) {
+  if (!_originalPickCandidateByPersonality || !candidates || !candidates.length) {
+    return _originalPickCandidateByPersonality
+      ? _originalPickCandidateByPersonality(candidates)
+      : (candidates && candidates[0]) || null;
+  }
+
+  if (!hasJacetLexicon() || (gameMode !== MODE_CPU_HARD && gameMode !== MODE_CPU_ULTIMATE)) {
+    // 従来通り
+    return _originalPickCandidateByPersonality(candidates);
+  }
+
+  // 元の候補選択結果を基本としつつ、JACET のバンド情報でわずかに調整
+  const baseChoice = _originalPickCandidateByPersonality(candidates);
+  if (!baseChoice) return baseChoice;
+
+  // Ultimate / Hard では、同じくらい強い手の中で「より高いバンド（=より難しい語）」を優先
+  const scored = candidates.map((c) => {
+    const word = (c.word || "").toLowerCase();
+    const band = getJacetBand(word); // 0..8
+    const len = (c.word || "").length;
+    const gain = c.gain || 0;
+
+    // 元のスコア感覚に寄せた簡易評価
+    const baseScore = gain * 4 + len * 2;
+    // 高いバンドほど +α（最大で +8）
+    const jacetBonus = band;
+    return {
+      cand: c,
+      score: baseScore + jacetBonus
+    };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0].cand || baseChoice;
+}
+
+// DOMContentLoaded 後に JACET ローダーを起動（エラー時は自動的に無視）
+if (document.readyState === "loading") {
+  window.addEventListener("DOMContentLoaded", () => {
+    initJacetLexicon().catch(() => {});
+  });
+} else {
+  initJacetLexicon().catch(() => {});
+}
+
+
 </script></body>
 </html>
