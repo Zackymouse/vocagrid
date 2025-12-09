@@ -323,7 +323,39 @@ window.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+
+  // --- Dictionary request queue to avoid hitting rate limits ---
+  const dictionaryQueue = [];
+  let isProcessingDictionaryQueue = false;
+
+  async function queueDictionaryCheck(word) {
+    return new Promise((resolve) => {
+      dictionaryQueue.push({ word, resolve });
+      processDictionaryQueue();
+    });
+  }
+
+  async function processDictionaryQueue() {
+    if (isProcessingDictionaryQueue || dictionaryQueue.length === 0) return;
+    isProcessingDictionaryQueue = true;
+    const { word, resolve } = dictionaryQueue.shift();
+
+    try {
+      // Small delay between requests as a simple rate limiter
+      await new Promise((r) => setTimeout(r, 100));
+      const result = await isInDictionary(word);
+      resolve(result);
+    } catch (e) {
+      // On error, treat as "not found" but don't crash the game
+      resolve(false);
+    } finally {
+      isProcessingDictionaryQueue = false;
+      processDictionaryQueue();
+    }
+  }
+
   // --- Online dictionary helpers ---
+
   async function isInDictionary(word) {
     const key = (word || "").toLowerCase();
     if (!key) return false;
@@ -438,7 +470,7 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     // Finally, check the word itself in the dictionary
-    const exists = await isInDictionary(lower);
+    const exists = await queueDictionaryCheck(lower);
     if (!exists) {
       return {
         ok: false,
@@ -585,6 +617,7 @@ window.addEventListener("DOMContentLoaded", function () {
   }
 
 
+  
   function renderBoard(targetEl, useCurrentSelection) {
     targetEl.innerHTML = "";
     tiles.forEach((t) => {
@@ -600,8 +633,22 @@ window.addEventListener("DOMContentLoaded", function () {
       btn.textContent = isSelected ? "" : t.letter;
       btn.dataset.id = t.id;
 
-      if (targetEl === boardEl) {
-        btn.addEventListener("click", handleTileClick);
+      // Accessibility: announce tile content and position, and pressed state
+      const row = typeof t.row === "number" ? t.row : 0;
+      const col = typeof t.col === "number" ? t.col : 0;
+      btn.setAttribute(
+        "aria-label",
+        `Tile ${t.letter} at row ${row} column ${col}`
+      );
+      btn.setAttribute("aria-pressed", isSelected ? "true" : "false");
+
+      // Lock state classes for pointer behavior
+      if (t.lockOwner) {
+        if (t.lockOwner === currentPlayer) {
+          btn.classList.add("locked-self");
+        } else {
+          btn.classList.add("locked-opponent");
+        }
       }
 
       targetEl.appendChild(btn);
@@ -617,19 +664,42 @@ window.addEventListener("DOMContentLoaded", function () {
     return word;
   }
 
+  
   function updateSelectedUI() {
-    selectedArea.innerHTML = "";
+    const currentChips = Array.from(selectedArea.querySelectorAll(".chip"));
+    const currentIds = currentChips.map((c) => c.dataset.id);
+
+    // Ensure chips exist and are ordered according to selectedIds
+    selectedIds.forEach((id, index) => {
+      if (!currentIds.includes(id)) {
+        const tile = tiles.find((t) => t.id === id);
+        if (!tile) return;
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = tile.letter;
+        chip.dataset.id = id;
+        chip.setAttribute("draggable", "true");
+        selectedArea.insertBefore(chip, selectedArea.children[index] || null);
+      } else {
+        const chip = currentChips.find((c) => c.dataset.id === id);
+        if (chip && chip !== selectedArea.children[index]) {
+          selectedArea.insertBefore(chip, selectedArea.children[index] || null);
+        }
+      }
+    });
+
+    // Remove chips for tiles that are no longer selected
+    currentChips.forEach((chip) => {
+      if (!selectedIds.includes(chip.dataset.id)) {
+        chip.remove();
+      }
+    });
+
+    // Rebuild current word and potential gain
     let word = "";
     selectedIds.forEach((id) => {
       const tile = tiles.find((t) => t.id === id);
-      if (!tile) return;
-      word += tile.letter;
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = tile.letter;
-      chip.dataset.id = id;
-      chip.setAttribute("draggable", "true");
-      selectedArea.appendChild(chip);
+      if (tile) word += tile.letter;
     });
 
     if (word.length >= 2) {
@@ -646,7 +716,7 @@ window.addEventListener("DOMContentLoaded", function () {
     triggerLiveValidation();
   }
 
-  function updateScoresUI() {
+function updateScoresUI() {
     const { tiles1, tiles2, remaining } = calcCounts();
     score1El.textContent = String(tiles1);
     score2El.textContent = String(tiles2);
@@ -998,6 +1068,16 @@ function resetGameState() {
 
 
   function handlePass() {
+    // Confirm pass if there is a current selection (human only)
+    if (!isCpuSubmitting && selectedIds && selectedIds.length > 0) {
+      const confirmPass = window.confirm(
+        "You have selected tiles. Are you sure you want to pass?"
+      );
+      if (!confirmPass) {
+        return;
+      }
+    }
+
     // Record the pass in history
     history.unshift({
       player: currentPlayer,
@@ -1317,6 +1397,23 @@ function evaluateMoveForDisplay(tileIds, wordUpper) {
   };
 }
 
+
+function evaluateMoveStrategically(tileIds, wordUpper) {
+  const stats = evaluateMoveForDisplay(tileIds, wordUpper);
+
+  // Derive higher-level strategic metrics from basic stats.
+  const territoryControl = (stats.gain || 0) + (stats.attack || 0);
+  const lockPotential = stats.nearLock || 0;
+  const disruptionValue = stats.attack || 0;
+
+  return {
+    ...stats,
+    territoryControl,
+    lockPotential,
+    disruptionValue
+  };
+}
+
 function updateCpuMoveLabelFromStats(stats) {
   if (!cpuMoveLabelEl || !stats) return;
   const tags = [];
@@ -1350,14 +1447,24 @@ function pickCandidateByPersonality(candidates) {
 
     switch (cpuPersonality) {
       case PERSONALITY_ULTIMATE: {
-        // Ultimate: 万能最強。得点とタイル獲得を総合評価して一番強い手を選ぶ
-        const scoreValue = (c) => {
-          const len = (c.word || "").length;
-          const gain = c.gain || 0;
-          return gain * 4 + len * 2;
-        };
-        list.sort((a, b) => scoreValue(b) - scoreValue(a));
-        break;
+        // Ultimate: 戦略評価を使って「盤面支配」「ロック」「妨害」まで含めて総合スコア化
+        const scored = list.map((c) => {
+          const upper = (c.word || "").toUpperCase();
+          const stats = evaluateMoveStrategically(c.tileIds || [], upper);
+          // 総合スコア: タイル獲得重視 + 盤面支配 + ロックポテンシャル + 単語長 + 接辞ボーナス
+          const score =
+            (stats.gain || 0) * 10 +
+            (stats.territoryControl || 0) * 4 +
+            (stats.lockPotential || 0) * 5 +
+            (stats.disruptionValue || 0) * 3 +
+            (stats.len || 0) * 2 +
+            (stats.affix || 0);
+          return { candidate: c, stats, score };
+        });
+
+        scored.sort((a, b) => b.score - a.score);
+        // 一番スコアの高い候補を返す
+        return scored[0] ? scored[0].candidate : null;
       }
 
       case PERSONALITY_AGGRESSIVE:
@@ -1568,7 +1675,7 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
   const candidates = [];
   const triedWords = new Set();
   const startTime = Date.now();
-  const TIME_LIMIT_MS = (gameMode === MODE_CPU_ULTIMATE ? 6000 : 3000);
+  const TIME_LIMIT_MS = (gameMode === MODE_CPU_ULTIMATE ? 4500 : 3000);
 
   const usable = getUsableTilesForCpu();
   if (usable.length < 2) return candidates;
@@ -1670,7 +1777,7 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
 
     try {
       if (gameMode === MODE_CPU_ULTIMATE) {
-        cpuPrecomputedCandidates = await generateCpuCandidatesEasy(20, 200, 5, 10);
+        cpuPrecomputedCandidates = await generateCpuCandidatesEasy(14, 120, 5, 8);
       } else if (gameMode === MODE_CPU_HARD) {
         cpuPrecomputedCandidates = await generateCpuCandidatesEasy(10, 80, 5, 7);
       } else if (gameMode === MODE_CPU_NORMAL) {
@@ -1711,7 +1818,7 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
 
     // Ultimate では極力 Pass を避けるため、候補が空ならもう一度だけ緩め条件で探索
     if (!candidates.length && !isGameOver && gameMode === MODE_CPU_ULTIMATE) {
-      const extraCandidates = await generateCpuCandidatesEasy(20, 220, 3, 10);
+      const extraCandidates = await generateCpuCandidatesEasy(12, 140, 3, 8);
       if (extraCandidates && extraCandidates.length) {
         candidates = extraCandidates;
       }
@@ -1856,12 +1963,30 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
     }
   }
 
+
+  // Re-check saved online game state when returning to this page
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      updateContinueVisibility();
+    }
+  });
+
   function handleContinueClick() {
     // Resume the saved online game session.
     window.location.href = "online-game.html";
   }
 
 // Event listeners
+  // Board click handler via event delegation to avoid per-tile listeners
+  if (boardEl) {
+    boardEl.addEventListener("click", (e) => {
+      const tileBtn = e.target.closest(".tile");
+      if (!tileBtn || !boardEl.contains(tileBtn)) return;
+      handleTileClick({ currentTarget: tileBtn });
+    });
+  }
+
+
   startBtn.addEventListener("click", startGame);
   backToStartBtn.addEventListener("click", backToStart);
   replayBtn.addEventListener("click", startGame);
@@ -1889,54 +2014,6 @@ async function generateCpuCandidatesEasy(maxCandidates = 5, maxTries = 40, minLe
 </script>
 <script>
 // グローバルモード
-let mode = "cpu"; // default
-
-// モード切り替え（ボタンなどから呼び出される想定）
-function setMode(selectedMode) {
-  mode = selectedMode;
-  console.log("モード設定:", mode);
-}
-
-// スタートボタン処理
-window.onload = function() {
-  const startBtn = document.getElementById("start");
-  if (startBtn) {
-    startBtn.onclick = function() {
-      console.log("Start clicked. Mode:", mode);
-      if (mode === "cpu") {
-        startCpuGame();
-      } else if (mode === "pvp") {
-        startPvpGame();
-      } else if (mode === "online") {
-        startOnlineGame();
-      }
-    };
-  }
-};
-
-// CPU戦
-function startCpuGame() {
-  console.log("CPU戦を開始します");
-  startGame("cpu");
-}
-
-// PvP
-function startPvpGame() {
-  console.log("PvPを開始します");
-  startGame("pvp");
-}
-
-// オンライン（Supabase利用）
-let supabase = null;
-function startOnlineGame() {
-  console.log("オンライン戦を開始します");
-  if (!supabase) {
-    supabase = window.supabase.createClient("https://your-project.supabase.co", "public-anon-key");
-  }
-  // supabase関連処理をここに追加
-  startGame("online");
-}
-
 // CPU Info 表示更新用 - Ultimateのときに表示も切り替える
 function updateCpuPersonalityDisplay(level, personality) {
   const elem = document.getElementById("cpu-personality");
@@ -1947,263 +2024,5 @@ function updateCpuPersonalityDisplay(level, personality) {
     elem.innerText = "Personality: " + personality;
   }
 }
-
-
-// === JACET frequency-based CPU enhancements (non-destructive wrapper) ===
-// このブロックは、JACET8000 のローカル txt ファイル（jacet1000.txt 〜 jacet8000.txt）が
-// 同じフォルダに配置されている場合にだけ動作します。
-// ファイルが存在しない場合、CPU の挙動は従来通りです。
-
-let jacetFreqMap = null;      // word(lowercase) -> rank(1..8000)
-let jacetBands = null;        // [ [1-1000], [1001-2000], ... ]
-let jacetLoadStarted = false;
-let ultimateWordlist = null;  // 追加の10,000語リスト
-let ultimateWordlistLoadStarted = false;
-
-async function initUltimateWordlist() {
-  if (ultimateWordlistLoadStarted) return;
-  ultimateWordlistLoadStarted = true;
-  try {
-    const res = await fetch("wordlist.10000.txt");
-    if (!res.ok) return;
-    const text = await res.text();
-    // 空白区切りの単語をすべて読み込む（重複は後勝ちでよい）
-    const tokens = text.split(/\s+/);
-    const list = [];
-    const seen = new Set();
-    for (const raw of tokens) {
-      const w = (raw || "").trim().toLowerCase();
-      if (!w) continue;
-      if (seen.has(w)) continue;
-      seen.add(w);
-      // アルファベットのみ（記号だらけのものを弾く簡易フィルタ）
-      if (!/^[a-z]+$/.test(w)) continue;
-      list.push(w);
-    }
-    if (list.length) {
-      ultimateWordlist = list;
-    }
-  } catch (e) {
-    // 読み込み失敗時は無視（既存ロジックにフォールバック）
-  }
-}
-
-function hasUltimateWordlist() {
-  return Array.isArray(ultimateWordlist) && ultimateWordlist.length > 0;
-}
-
-
-async function initJacetLexicon() {
-  if (jacetLoadStarted) return;
-  jacetLoadStarted = true;
-  jacetFreqMap = new Map();
-  jacetBands = Array.from({ length: 8 }, () => []);
-
-  const bands = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000];
-  let currentRank = 1;
-
-  for (let i = 0; i < bands.length; i++) {
-    const size = bands[i];
-    const bandIndex = i; // 0..7
-
-    // ローカルの jacetXXXX.txt を読むことを想定（事前にユーザーが配置）
-    const fileName = `jacet${size}.txt`;
-    try {
-      const res = await fetch(fileName);
-      if (!res.ok) continue;
-      const text = await res.text();
-      // lextutor 形式は基本的に空白区切りで 1000 語
-      const rawTokens = text.split(/\s+/);
-      for (const token of rawTokens) {
-        const w = (token || "").trim().toLowerCase();
-        if (!w || jacetFreqMap.has(w)) continue;
-        jacetFreqMap.set(w, currentRank++);
-        if (jacetBands[bandIndex]) {
-          jacetBands[bandIndex].push(w);
-        }
-      }
-    } catch (e) {
-      // ネットワーク・ローカルアクセスに失敗した場合は無視
-    }
-  }
-}
-
-function hasJacetLexicon() {
-  return !!(jacetFreqMap && jacetFreqMap.size && jacetBands && jacetBands.length);
-}
-
-function getJacetRank(word) {
-  if (!hasJacetLexicon()) return null;
-  if (!word) return null;
-  const key = String(word).toLowerCase();
-  const rank = jacetFreqMap.get(key);
-  return rank || null;
-}
-
-function getJacetBand(word) {
-  const rank = getJacetRank(word);
-  if (!rank) return 0;
-  // 1-1000 -> 1, 1001-2000 -> 2, ... 7001-8000 -> 8
-  return Math.min(8, Math.ceil(rank / 1000));
-}
-
-// 既存の getOfflineLexiconCandidates を保持してラップする
-const _originalGetOfflineLexiconCandidates = typeof getOfflineLexiconCandidates === "function"
-  ? getOfflineLexiconCandidates
-  : null;
-
-function getOfflineLexiconCandidates(minLen, maxLenWord, player, preferLong) {
-  const results = [];
-
-  function collectFromList(list) {
-    for (const w of list) {
-      const upper = w.toUpperCase();
-      const len = upper.length;
-      if (len < minLen || len > maxLenWord) continue;
-      if (!canMakeWordFromBoard(upper, player)) continue;
-      if (usedWords.has(upper.toLowerCase())) continue;
-      results.push(upper);
-      if (results.length >= 60) break;
-    }
-  }
-
-  // まず JACET がロード済みなら、難易度に応じてバンドから優先的に拾う
-  if (hasJacetLexicon()) {
-    let maxBandIndex = 1; // 0-based: 0=1k,1=2k
-    if (gameMode === MODE_CPU_EASY) {
-      maxBandIndex = 1; // 1-2k
-    } else if (gameMode === MODE_CPU_NORMAL) {
-      maxBandIndex = 3; // 1-4k
-    } else if (gameMode === MODE_CPU_HARD) {
-      maxBandIndex = 5; // 1-6k
-    } else if (gameMode === MODE_CPU_ULTIMATE) {
-      maxBandIndex = 7; // 1-8k
-    }
-
-    if (preferLong) {
-      for (let band = maxBandIndex; band >= 0 && results.length < 60; band--) {
-        const bandList = jacetBands[band] || [];
-        collectFromList(bandList);
-      }
-    } else {
-      for (let band = 0; band <= maxBandIndex && results.length < 60; band++) {
-        const bandList = jacetBands[band] || [];
-        collectFromList(bandList);
-      }
-    }
-
-    if (results.length >= 40) {
-      return results;
-    }
-    // JACET だけでは十分な候補が集まらなかった場合、このあと Ultimate 用リスト or 元のロジックにフォールバック
-  }
-
-  // Ultimate かつ 10,000語リストがロード済みなら、そこからも候補を追加で拾う
-  if (gameMode === MODE_CPU_ULTIMATE && hasUltimateWordlist()) {
-    collectFromList(ultimateWordlist);
-    if (results.length) {
-      return results;
-    }
-  }
-
-  // ここまでで何も拾えなかった場合は、元のロジックにフォールバック
-  if (_originalGetOfflineLexiconCandidates) {
-    return _originalGetOfflineLexiconCandidates(minLen, maxLenWord, player, preferLong);
-  }
-  return [];
-}
-
-// pickCandidateByPersonality も包み込んで、JACET 情報があれば Ultimate/Hard の判断を少し強化
-const _originalPickCandidateByPersonality = typeof pickCandidateByPersonality === "function"
-  ? pickCandidateByPersonality
-  : null;
-
-function pickCandidateByPersonality(candidates) {
-  if (!_originalPickCandidateByPersonality || !candidates || !candidates.length) {
-    return _originalPickCandidateByPersonality
-      ? _originalPickCandidateByPersonality(candidates)
-      : (candidates && candidates[0]) || null;
-  }
-
-  if (!hasJacetLexicon() || (gameMode !== MODE_CPU_HARD && gameMode !== MODE_CPU_ULTIMATE)) {
-    // 従来通り
-    return _originalPickCandidateByPersonality(candidates);
-  }
-
-  const baseChoice = _originalPickCandidateByPersonality(candidates);
-  if (!baseChoice) return baseChoice;
-
-  const scored = candidates.map((c) => {
-    const word = (c.word || "").toLowerCase();
-    const band = getJacetBand(word); // 0..8
-    const len = (c.word || "").length;
-    const gain = c.gain || 0;
-
-    // 元のスコア感覚に寄せたベース
-    const baseScore = gain * 4 + len * 2;
-    const jacetBonus = band;
-    return {
-      cand: c,
-      baseScore: baseScore + jacetBonus,
-      band,
-      len,
-      gain,
-    };
-  });
-
-  if (gameMode === MODE_CPU_ULTIMATE) {
-    // Ultimate: 0点の手を強く避け、ロック/大量取得と長い単語を最優先
-    scored.forEach((s) => {
-      let score = 0;
-      const g = s.gain;
-      const L = s.len;
-      const B = s.band;
-
-      // タイル獲得を最重要
-      score += g * 10;
-
-      // 長い単語を優先（5文字以上で加点を大きく）
-      if (L >= 8) {
-        score += L * 6;
-      } else if (L >= 6) {
-        score += L * 4;
-      } else if (L >= 4) {
-        score += L * 2;
-      } else {
-        score -= (5 - L) * 4;
-      }
-
-      // JACETバンドは高いほど +α （難しい語をちょい優遇）
-      score += B * 2;
-
-      // gain 0 の手はほぼ選ばない
-      if (g === 0) {
-        score -= 60;
-      }
-
-      s.score = score;
-    });
-
-    scored.sort((a, b) => b.score - a.score);
-    return scored[0].cand || baseChoice;
-  }
-
-  // Hard: これまで通りに近いが、JACET情報で少しだけ調整
-  scored.sort((a, b) => b.baseScore - a.baseScore);
-  return scored[0].cand || baseChoice;
-}
-
-// DOMContentLoaded 後に JACET / Ultimate 用リストのローダーを起動（エラー時は自動的に無視）
-if (document.readyState === "loading") {
-  window.addEventListener("DOMContentLoaded", () => {
-    initJacetLexicon().catch(() => {});
-    initUltimateWordlist().catch(() => {});
-  });
-} else {
-  initJacetLexicon().catch(() => {});
-  initUltimateWordlist().catch(() => {});
-}
-
-
 </script></body>
 </html>
