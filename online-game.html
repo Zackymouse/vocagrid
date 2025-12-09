@@ -336,39 +336,7 @@ let onlineRole = null; // "host" or "guest"
     }
   }
 
-
-  // --- Dictionary request queue to avoid hitting rate limits ---
-  const dictionaryQueue = [];
-  let isProcessingDictionaryQueue = false;
-
-  async function queueDictionaryCheck(word) {
-    return new Promise((resolve) => {
-      dictionaryQueue.push({ word, resolve });
-      processDictionaryQueue();
-    });
-  }
-
-  async function processDictionaryQueue() {
-    if (isProcessingDictionaryQueue || dictionaryQueue.length === 0) return;
-    isProcessingDictionaryQueue = true;
-    const { word, resolve } = dictionaryQueue.shift();
-
-    try {
-      // Small delay between requests as a simple rate limiter
-      await new Promise((r) => setTimeout(r, 100));
-      const result = await isInDictionary(word);
-      resolve(result);
-    } catch (e) {
-      // On error, treat as "not found" but don't crash the game
-      resolve(false);
-    } finally {
-      isProcessingDictionaryQueue = false;
-      processDictionaryQueue();
-    }
-  }
-
   // --- Online dictionary helpers ---
-
   async function isInDictionary(word) {
     const key = (word || "").toLowerCase();
     if (!key) return false;
@@ -483,7 +451,7 @@ let onlineRole = null; // "host" or "guest"
     }
 
     // Finally, check the word itself in the dictionary
-    const exists = await queueDictionaryCheck(lower);
+    const exists = await isInDictionary(lower);
     if (!exists) {
       return {
         ok: false,
@@ -630,7 +598,6 @@ let onlineRole = null; // "host" or "guest"
   }
 
 
-  
   function renderBoard(targetEl, useCurrentSelection) {
     targetEl.innerHTML = "";
     tiles.forEach((t) => {
@@ -646,22 +613,8 @@ let onlineRole = null; // "host" or "guest"
       btn.textContent = isSelected ? "" : t.letter;
       btn.dataset.id = t.id;
 
-      // Accessibility: announce tile content and position, and pressed state
-      const row = typeof t.row === "number" ? t.row : 0;
-      const col = typeof t.col === "number" ? t.col : 0;
-      btn.setAttribute(
-        "aria-label",
-        `Tile ${t.letter} at row ${row} column ${col}`
-      );
-      btn.setAttribute("aria-pressed", isSelected ? "true" : "false");
-
-      // Lock state classes for pointer behavior
-      if (t.lockOwner) {
-        if (t.lockOwner === currentPlayer) {
-          btn.classList.add("locked-self");
-        } else {
-          btn.classList.add("locked-opponent");
-        }
+      if (targetEl === boardEl) {
+        btn.addEventListener("click", handleTileClick);
       }
 
       targetEl.appendChild(btn);
@@ -677,42 +630,19 @@ let onlineRole = null; // "host" or "guest"
     return word;
   }
 
-  
   function updateSelectedUI() {
-    const currentChips = Array.from(selectedArea.querySelectorAll(".chip"));
-    const currentIds = currentChips.map((c) => c.dataset.id);
-
-    // Ensure chips exist and are ordered according to selectedIds
-    selectedIds.forEach((id, index) => {
-      if (!currentIds.includes(id)) {
-        const tile = tiles.find((t) => t.id === id);
-        if (!tile) return;
-        const chip = document.createElement("span");
-        chip.className = "chip";
-        chip.textContent = tile.letter;
-        chip.dataset.id = id;
-        chip.setAttribute("draggable", "true");
-        selectedArea.insertBefore(chip, selectedArea.children[index] || null);
-      } else {
-        const chip = currentChips.find((c) => c.dataset.id === id);
-        if (chip && chip !== selectedArea.children[index]) {
-          selectedArea.insertBefore(chip, selectedArea.children[index] || null);
-        }
-      }
-    });
-
-    // Remove chips for tiles that are no longer selected
-    currentChips.forEach((chip) => {
-      if (!selectedIds.includes(chip.dataset.id)) {
-        chip.remove();
-      }
-    });
-
-    // Rebuild current word and potential gain
+    selectedArea.innerHTML = "";
     let word = "";
     selectedIds.forEach((id) => {
       const tile = tiles.find((t) => t.id === id);
-      if (tile) word += tile.letter;
+      if (!tile) return;
+      word += tile.letter;
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = tile.letter;
+      chip.dataset.id = id;
+      chip.setAttribute("draggable", "true");
+      selectedArea.appendChild(chip);
     });
 
     if (word.length >= 2) {
@@ -729,7 +659,7 @@ let onlineRole = null; // "host" or "guest"
     triggerLiveValidation();
   }
 
-function updateScoresUI() {
+  function updateScoresUI() {
     const { tiles1, tiles2, remaining } = calcCounts();
     score1El.textContent = String(tiles1);
     score2El.textContent = String(tiles2);
@@ -1041,7 +971,6 @@ function startGame() {
   }
 
   async function submitWord() {
-  try {
     if (isChecking) return;
 
     const word = buildCurrentWord();
@@ -1131,31 +1060,10 @@ function startGame() {
         }
       }
     }
-  } catch (error) {
-    if (error && (error.name === "NetworkError" || error.message === "Failed to fetch")) {
-      messageEl.textContent = "Network error. Please check your connection.";
-      // Simple auto-retry after a short delay
-      setTimeout(() => {
-        submitWord();
-      }, 3000);
-    } else {
-      console.error("Unexpected error in submitWord:", error);
-      messageEl.textContent = "An unexpected error occurred while submitting the word.";
-    }
   }
-}
 
-function handlePass() {
-    // Confirm pass if there is a current selection (human only)
-    if (!isCpuSubmitting && selectedIds && selectedIds.length > 0) {
-      const confirmPass = window.confirm(
-        "You have selected tiles. Are you sure you want to pass?"
-      );
-      if (!confirmPass) {
-        return;
-      }
-    }
 
+  function handlePass() {
     // Record the pass in history
     history.unshift({
       player: currentPlayer,
@@ -1404,11 +1312,8 @@ function handlePass() {
 
 
 
-  
   function getCpuPersonalityLabelText() {
     switch (cpuPersonality) {
-      case PERSONALITY_ULTIMATE:
-        return "Ultimate (最強)";
       case PERSONALITY_AGGRESSIVE:
         return "Aggressive (攻撃)";
       case PERSONALITY_DEFENSIVE:
@@ -1424,7 +1329,7 @@ function handlePass() {
     }
   }
 
-function updateCpuPersonalityLabel() {
+  function updateCpuPersonalityLabel() {
     if (!cpuPersonalityLabelEl) return;
     cpuPersonalityLabelEl.textContent = getCpuPersonalityLabelText();
   }
@@ -1485,24 +1390,7 @@ function updateCpuPersonalityLabel() {
     };
   }
 
-  
-function evaluateMoveStrategically(tileIds, wordUpper) {
-  const stats = evaluateMoveForDisplay(tileIds, wordUpper);
-
-  // Derive higher-level strategic metrics from basic stats.
-  const territoryControl = (stats.gain || 0) + (stats.attack || 0);
-  const lockPotential = stats.nearLock || 0;
-  const disruptionValue = stats.attack || 0;
-
-  return {
-    ...stats,
-    territoryControl,
-    lockPotential,
-    disruptionValue
-  };
-}
-
-function updateCpuMoveLabelFromStats(stats) {
+  function updateCpuMoveLabelFromStats(stats) {
     if (!cpuMoveLabelEl || !stats) return;
     const tags = [];
     if (stats.attack > 0) tags.push("ATTACK x" + stats.attack);
@@ -1535,24 +1423,6 @@ function updateCpuMoveLabelFromStats(stats) {
     const list = candidates.slice();
 
     switch (cpuPersonality) {
-      case PERSONALITY_ULTIMATE: {
-        // Ultimate: 戦略評価を使って「盤面支配」「ロック」「妨害」まで含めて総合スコア化
-        const scored = list.map((c) => {
-          const upper = (c.word || "").toUpperCase();
-          const stats = evaluateMoveStrategically(c.tileIds || [], upper);
-          const score =
-            (stats.gain || 0) * 10 +
-            (stats.territoryControl || 0) * 4 +
-            (stats.lockPotential || 0) * 5 +
-            (stats.disruptionValue || 0) * 3 +
-            (stats.len || 0) * 2 +
-            (stats.affix || 0);
-          return { candidate: c, stats, score };
-        });
-        scored.sort((a, b) => b.score - a.score);
-        return scored[0] ? scored[0].candidate : null;
-      }
-
       case PERSONALITY_AGGRESSIVE:
         // gain 大きい順
         list.sort((a, b) => b.gain - a.gain);
@@ -2085,17 +1955,6 @@ function updateCpuMoveLabelFromStats(stats) {
   }
 
   // Event listeners
-
-  // Board click handler via event delegation to avoid per-tile listeners
-  if (boardEl) {
-    boardEl.addEventListener("click", (e) => {
-      const tileBtn = e.target.closest(".tile");
-      if (!tileBtn || !boardEl.contains(tileBtn)) return;
-      handleTileClick({ currentTarget: tileBtn });
-    });
-  }
-
-
   startBtn.addEventListener("click", startGame);
   backToStartBtn.addEventListener("click", backToStart);
   replayBtn.addEventListener("click", startGame);
